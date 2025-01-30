@@ -1,40 +1,31 @@
-# Welcome to Remix!
+# log
 
-- 📖 [Remix docs](https://remix.run/docs)
+npx create-remix@latest gcp-llm
+docker rmi $(docker images -q) -f
+docker build -t gcp . --no-cache
+docker run -it -p 3000:3000 gcp
 
-## Development
+# 設計
 
-Run the dev server:
+## Remix
 
-```shellscript
-npm run dev
-```
+- バックエンドもフロントエンドも纏めて時間をかけずに構築したい
 
-## Deployment
+## Cloud Run
 
-First, build your app for production:
+- 従量課金のサーバレスであり、Functions よりも制約が小さく柔軟な処理ができる
+- とりあえず Cloud Run 使っておけみたいな雰囲気があり、情報量が多い
+- 安心して Remix を動かせそう
 
-```sh
-npm run build
-```
+## FireStore
 
-Then run the app in production mode:
+- Cloud SQL が定番なので触りたいが、機能を作り込まず決まったアクセスパターンしかないので NoSQL にする
 
-```sh
-npm start
-```
+## Firebase Auth
 
-Now you'll need to pick a host to deploy it to.
+- Google Auth の方が多要素認証等できることは多いが、今回は ID トークンで認証できればなんでも良い
+- モバイルを今後お手軽に実装できるように Firebase 使っておきたい
 
-### DIY
+## Docker
 
-If you're familiar with deploying Node applications, the built-in Remix app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
-- `build/server`
-- `build/client`
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever css framework you prefer. See the [Vite docs on css](https://vitejs.dev/guide/features.html#css) for more information.
+[Dockerfile のベストプラクティス](https://future-architect.github.io/articles/20240726a/)
