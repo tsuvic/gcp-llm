@@ -1,8 +1,10 @@
-build
 node_modules
-.eslintrc.cjs
-.gitignore
+build
 .git
+.gitignore
+.env*
+*.log
+.cache
+dist
+.eslintrc.cjs
 *.md
-tsconfig.json
-vite.config.js

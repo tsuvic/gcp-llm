@@ -29,3 +29,4 @@ docker run -it -p 3000:3000 gcp
 ## Docker
 
 [Dockerfile のベストプラクティス](https://future-architect.github.io/articles/20240726a/)
+docker 関連のビルドエラーの解決は、これまで辛みがあったが、AI に投げれば自動で解消してくれてしまう。。。
