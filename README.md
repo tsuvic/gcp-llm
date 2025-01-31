@@ -78,3 +78,75 @@ Private な場合の接続方法が知りたい
 ## Vertex AI
 
 [Vertex AI API リファレンス](https://cloud.google.com/vertex-ai/pricing?hl=ja)
+
+```
+
+{
+  "candidates": [
+    {
+      "content": {
+        "role": "model",
+        "parts": [
+          {
+            "text": "Hi there!\n"
+          }
+        ]
+      },
+      "finishReason": "STOP",
+      "safetyRatings": [
+        {
+          "category": "HARM_CATEGORY_HATE_SPEECH",
+          "probability": "NEGLIGIBLE",
+          "probabilityScore": 0.09674762,
+          "severity": "HARM_SEVERITY_NEGLIGIBLE",
+          "severityScore": 0.08671734
+        },
+        {
+          "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+          "probability": "NEGLIGIBLE",
+          "probabilityScore": 0.037115306,
+          "severity": "HARM_SEVERITY_NEGLIGIBLE",
+          "severityScore": 0.11226705
+        },
+        {
+          "category": "HARM_CATEGORY_HARASSMENT",
+          "probability": "NEGLIGIBLE",
+          "probabilityScore": 0.14342335,
+          "severity": "HARM_SEVERITY_NEGLIGIBLE",
+          "severityScore": 0.13670991
+        },
+        {
+          "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+          "probability": "NEGLIGIBLE",
+          "probabilityScore": 0.088406384,
+          "severity": "HARM_SEVERITY_LOW",
+          "severityScore": 0.20894316
+        }
+      ],
+      "avgLogprobs": -0.033653438091278076,
+      "index": 0
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 8,
+    "candidatesTokenCount": 4,
+    "totalTokenCount": 12,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 8
+      }
+    ],
+    "candidatesTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 4
+      }
+    ]
+  },
+  "modelVersion": "gemini-1.5-flash-002",
+  "createTime": "2025-01-31T09:43:07.214616Z",
+  "responseId": "K5ucZ9iMDbaMz8cPsumi2Qw"
+}
+
+```
