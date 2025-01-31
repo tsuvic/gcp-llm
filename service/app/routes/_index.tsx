@@ -55,7 +55,7 @@ export async function action({ request }: ActionFunctionArgs) {
 					},
 				],
 				generationConfig: {
-					maxOutputTokens: 1000,
+					maxOutputTokens: 8000,
 					temperature: 0.5,
 					topP: 0.95,
 				},
@@ -70,36 +70,18 @@ export async function action({ request }: ActionFunctionArgs) {
 		);
 
 		const startTime = performance.now();
+		console.log(startTime);
 
 		try {
 			// YouTubeのURL形式をチェック
 			const youtubeUrlPattern =
 				/^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
 
-			// 言語検出
+			// 書き起こし
 			const isYouTube = youtubeUrlPattern.test(url.toString());
-			const langDetectReq = isYouTube
-				? createVideoLanguageDetectionRequest(url)
-				: createWebpageLanguageDetectionRequest(url);
-			const langResult = await model.generateContent(langDetectReq);
-			const langResponse = await langResult.response;
-			const detectedLang =
-				langResponse.candidates?.[0]?.content?.parts?.[0]?.text
-					?.trim()
-					.toLowerCase() || "ja";
-
-			const langDetectEndTime = performance.now();
-			const langDetectProcessingTime = langDetectEndTime - startTime;
-			console.log(
-				`トランスクリプト処理時間: ${langDetectProcessingTime}ミリ秒`,
-			);
-			console.log(`検出言語: ${detectedLang}`);
-			console.log(langResponse);
-
-			// 検出された言語に基づいてリクエスト
 			const finalReq = isYouTube
-				? createVideoTranscriptionRequest(url, detectedLang)
-				: createWebpageTranscriptionRequest(url, detectedLang);
+				? createVideoTranscriptionRequest(url)
+				: createWebpageTranscriptionRequest(url);
 
 			const result = await model.generateContent(finalReq);
 			const res = await result.response;
@@ -110,11 +92,8 @@ export async function action({ request }: ActionFunctionArgs) {
 			console.log(
 				`トランスクリプト処理時間: ${transcriptProcessingTime}ミリ秒`,
 			);
+			console.log(res.candidates?.[0]?.content);
 			console.log(res);
-
-			if (!res.candidates?.[0]?.content?.parts?.[0]?.text) {
-				throw new Error("AIからの応答が不正な形式です");
-			}
 
 			// 結果をJSONとして保存
 			const outputData = {
@@ -122,31 +101,43 @@ export async function action({ request }: ActionFunctionArgs) {
 				inputUrl: url.toString(),
 				isYouTube: youtubeUrlPattern.test(url.toString()),
 				processingTime: transcriptProcessingTime,
-				result: res.candidates[0].content.parts[0].text,
+				result: res.candidates?.[0]?.content?.parts?.[0]?.text || "",
 			};
+			const fileNameForTranscription = await saveOutputFile(outputData);
 
-			const outputPath = join(process.cwd(), "output");
-			const fileName = `result-${Date.now()}.json`;
+			// 翻訳
+			const translationReq = createTranslationRequest(outputData);
+			const translationResult = await model.generateContent(translationReq);
+			const translationRes = await translationResult.response;
 
-			try {
-				await writeFile(
-					join(outputPath, fileName),
-					JSON.stringify(outputData, null, 2),
-					"utf-8",
-				);
-				console.log(`結果を保存しました: ${fileName}`);
-			} catch (error) {
-				console.error("ファイル保存エラー:", error);
-			}
+			const translationEndTime = performance.now();
+			const translationProcessingTime = translationEndTime - transcriptEndTime;
+
+			console.log(`翻訳処理時間: ${translationProcessingTime}ミリ秒`);
+			console.log(translationRes.candidates?.[0]?.content);
+			console.log(translationRes);
+
+			const outputDataTranslation = {
+				...outputData,
+				result: translationRes.candidates?.[0]?.content?.parts?.[0]?.text || "",
+			};
+			const fileNameForTranslation = await saveOutputFile(
+				outputDataTranslation,
+			);
 
 			return {
 				status: "success",
 				message: "リクエストが正常に処理されました",
-				response: res.candidates[0].content.parts[0].text,
+				res: res.candidates?.[0]?.content?.parts?.[0]?.text || "",
+				resTranslation:
+					translationRes.candidates?.[0]?.content?.parts?.[0]?.text || "",
 				processingTime: `${transcriptProcessingTime.toFixed(2)}ミリ秒`,
-				savedFile: fileName,
-				detectedLanguage: detectedLang === "ja" ? "日本語" : "English",
+				processingTimeTranslation: `${translationProcessingTime.toFixed(2)}ミリ秒`,
+				savedFile: fileNameForTranscription,
+				savedFileTranslation: fileNameForTranslation,
 				usageTokens: res.usageMetadata?.totalTokenCount || 0,
+				usageTokensTranslation:
+					translationRes.usageMetadata?.totalTokenCount || 0,
 			};
 		} catch (error) {
 			console.error("AI処理エラー:", error);
@@ -163,6 +154,31 @@ export async function action({ request }: ActionFunctionArgs) {
 			message: "サーバーでエラーが発生しました",
 			error: error instanceof Error ? error.message : "不明なエラー",
 		};
+	}
+
+	async function saveOutputFile(outputData: {
+		timestamp: string;
+		inputUrl: string;
+		isYouTube: boolean;
+		processingTime: number;
+		result: string;
+	}) {
+		const outputPath = join(process.cwd(), "output");
+		const fileName = `result-${Date.now()}.json`;
+
+		try {
+			await mkdir(outputPath, { recursive: true });
+			await writeFile(
+				join(outputPath, fileName),
+				JSON.stringify(outputData, null, 2),
+				"utf-8",
+			);
+			console.log(`結果を保存しました: ${fileName}`);
+			return fileName;
+		} catch (error) {
+			console.error("ファイル保存エラー:", error);
+			return "";
+		}
 	}
 
 	function createWebpageLanguageDetectionRequest(fileUri: FormDataEntryValue) {
@@ -207,15 +223,9 @@ export async function action({ request }: ActionFunctionArgs) {
 		};
 	}
 
-	function createWebpageTranscriptionRequest(
-		fileUri: FormDataEntryValue,
-		language: string,
-	) {
+	function createWebpageTranscriptionRequest(fileUri: FormDataEntryValue) {
 		const textPart = {
-			text:
-				language === "ja"
-					? `このWebページの本文を抽出してください。タイトル、ヘッダー、フッターなどの本文と関係ない部分は除外してください。抽出したテキストのみ出力してください。`
-					: `Extract the main text from this webpage. Exclude the title, header, footer, and any other content not related to the main body of the text. Just output the extracted text without any additional response.`,
+			text: `Extract the main content from this webpage, excluding any HTML tags (e.g., links, code snippets, etc.). Only output the text content, without any HTML or code elements. If the input is in English, output the text in English, and if the input is in Japanese, output the text in Japanese.`,
 		};
 		const filePart = {
 			fileData: {
@@ -233,15 +243,9 @@ export async function action({ request }: ActionFunctionArgs) {
 		};
 	}
 
-	function createVideoTranscriptionRequest(
-		fileUri: FormDataEntryValue,
-		language: string,
-	) {
+	function createVideoTranscriptionRequest(fileUri: FormDataEntryValue) {
 		const textPart = {
-			text:
-				language === "ja"
-					? `この動画の音声を文字起こししてください。各文章にタイムスタンプを含めてください。文字起こし結果のみ出力してください。`
-					: `Please transcribe the speech from this video and include timestamps for each sentence. Just output the transcription without any additional response.`,
+			text: `Transcribe the speech from this video and include timestamps for each sentence. Just output the extracted text without any additional response. If the input is English, output the text in English. If the input is Japanese, output the text in Japanese.`,
 		};
 		const filePart = {
 			fileData: {
@@ -258,6 +262,81 @@ export async function action({ request }: ActionFunctionArgs) {
 			],
 		};
 	}
+}
+
+function createWebpageTranscriptionWithLangRequest(
+	fileUri: FormDataEntryValue,
+	language: string,
+) {
+	const textPart = {
+		text:
+			language === "ja"
+				? `このWebページの本文を抽出してください。タイトル、ヘッダー、フッターなどの本文と関係ない部分は除外してください。抽出したテキストのみ出力してください。`
+				: `Extract the main text from this webpage. Exclude the title, header, footer, and any other content not related to the main body of the text. Just output the extracted text without any additional response.`,
+	};
+	const filePart = {
+		fileData: {
+			mimeType: "text/html",
+			fileUri: fileUri.toString(),
+		},
+	};
+	return {
+		contents: [
+			{
+				role: "user",
+				parts: [textPart, filePart],
+			},
+		],
+	};
+}
+
+function createVideoTranscriptionWithLangRequest(
+	fileUri: FormDataEntryValue,
+	language: string,
+) {
+	const textPart = {
+		text:
+			language === "ja"
+				? `この動画の音声を文字起こししてください。各文章にタイムスタンプを含めてください。文字起こし結果のみ出力してください。`
+				: `Please transcribe the speech from this video and include timestamps for each sentence. Just output the transcription without any additional response.`,
+	};
+	const filePart = {
+		fileData: {
+			mimeType: "video/*",
+			fileUri: fileUri.toString(),
+		},
+	};
+	return {
+		contents: [
+			{
+				role: "user",
+				parts: [textPart, filePart],
+			},
+		],
+	};
+}
+
+function createTranslationRequest(outputData: {
+	timestamp: string;
+	inputUrl: string;
+	isYouTube: boolean;
+	processingTime: number;
+	result: string;
+}) {
+	const textPart = {
+		text: `Translate the following text to English if it's in Japanese, or to Japanese if it's in English. Output each sentence pair (one English sentence followed by its Japanese translation) on separate lines with a single newline between each pair.
+
+    Text to translate:
+		${outputData.result}`,
+	};
+	return {
+		contents: [
+			{
+				role: "user",
+				parts: [textPart],
+			},
+		],
+	};
 }
 
 export default function Index() {
@@ -346,23 +425,47 @@ export default function Index() {
 					>
 						{actionData && (
 							<div className="h-full flex flex-col">
-								<p
-									className={`flex-1 overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed ${
-										actionData.status === "error"
-											? "text-red-600 dark:text-red-400"
-											: "text-gray-700 dark:text-gray-300"
-									}`}
-								>
-									{actionData.status === "error"
-										? `${actionData.message}: ${actionData.error}`
-										: actionData.response}
-								</p>
+								{actionData.status === "success" ? (
+									<div className="flex-1 flex flex-col overflow-hidden">
+										<div className="flex-1 overflow-y-auto">
+											<p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+												{actionData.resTranslation}
+											</p>
+										</div>
+									</div>
+								) : (
+									<p className="flex-1 overflow-y-auto whitespace-pre-wrap text-sm leading-relaxed text-red-600 dark:text-red-400">
+										{`${actionData.message}: ${actionData.error}`}
+									</p>
+								)}
 								{actionData.status === "success" && (
 									<div className="flex-none mt-2 pt-2 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 space-y-1">
-										<p>識別言語: {actionData.detectedLanguage}</p>
-										<p>使用トークン: {actionData.usageTokens}</p>
-										<p>処理時間: {actionData.processingTime}</p>
-										<p>保存ファイル: {actionData.savedFile}</p>
+										<div className="flex justify-between">
+											<div>
+												<p>書き起こし</p>
+												<p className="ml-4">
+													トークン数: {actionData.usageTokens}
+												</p>
+												<p className="ml-4">
+													処理時間: {actionData.processingTime}
+												</p>
+												<p className="ml-4">
+													保存ファイル: {actionData.savedFile}
+												</p>
+											</div>
+											<div>
+												<p>翻訳</p>
+												<p className="ml-4">
+													トークン数: {actionData.usageTokensTranslation}
+												</p>
+												<p className="ml-4">
+													処理時間: {actionData.processingTimeTranslation}
+												</p>
+												<p className="ml-4">
+													保存ファイル: {actionData.savedFileTranslation}
+												</p>
+											</div>
+										</div>
 									</div>
 								)}
 							</div>

@@ -84,6 +84,8 @@ Private な場合の接続方法が知りたい
 
 Unable to submit request because the input token count is 48261 but model only supports up to 32768. Reduce the input token count and try again. You can also use the CountTokens API to calculate prompt token count and billable characters.
 
+long output token length is not enabled for this request
+
 ```
 
 {
