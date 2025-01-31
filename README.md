@@ -79,6 +79,11 @@ Private な場合の接続方法が知りたい
 
 [Vertex AI API リファレンス](https://cloud.google.com/vertex-ai/pricing?hl=ja)
 
+[text](https://www.youtube.com/watch?v=Jllce4b70gk)
+[text](https://www.youtube.com/watch?v=egqQ9byHzok)
+
+Unable to submit request because the input token count is 48261 but model only supports up to 32768. Reduce the input token count and try again. You can also use the CountTokens API to calculate prompt token count and billable characters.
+
 ```
 
 {
