@@ -139,10 +139,18 @@ export function createWebPageTranscriptionAndTranslationRequest(
 	fileUri: FormDataEntryValue,
 ) {
 	const textPart = {
-		text: `Extract the main content from this webpage, removing all HTML tags and code elements. Then, translate the extracted text: if it's in English, translate it to Japanese; if it's in Japanese, translate it to English. Each sentence should be treated as a single unit.
-		Output the result as a pure JSON array without any additional formatting,
-		like this:[{"en": "xxxxxx", "ja": "xxxxx"}, {"en": "xxxxxx", "ja": "xxxxx"}]
-		Ensure that the response contains only the JSON array, without any extra text, code blocks, or formatting characters.`,
+		text: `
+Follow these instructions.
+
+DO NOT INCLUDE SUMMARIES, INTERPRETATIONS, OR OPINIONS. WE NEED JUST ARTICLE CONTENT.
+If you include anything extra, it will be absolutely unacceptable.  
+
+1. Extract only the main article content, exactly as it is, without HTML or metadata.  
+2. Translate each sentence separately: English to Japanese, Japanese to English.  
+3. Output the result in this format: [{"en": "xxxxxx", "ja": "xxxxx"}, {"en": "xxxxxx", "ja": "xxxxx"}]  
+4. Absolutely no extra text, code blocks, or formatting characters.  
+
+`,
 	};
 	const filePart = {
 		fileData: {
@@ -183,27 +191,69 @@ Text to translate:
 	};
 }
 
+// 共通のファイル保存関数
+export async function saveFile(options: {
+	content: string | Uint8Array;
+	directory: string;
+	eventId: string;
+	suffix?: number;
+	extension: string;
+	encoding?: BufferEncoding | "binary";
+}) {
+	const {
+		content,
+		directory,
+		eventId,
+		suffix,
+		extension,
+		encoding = "utf-8",
+	} = options;
+	const outputPath = join(process.cwd(), "output", directory);
+	const fileName =
+		suffix !== undefined
+			? `${eventId}-${suffix}.${extension}`
+			: `${eventId}.${extension}`;
+
+	try {
+		await mkdir(outputPath, { recursive: true });
+		await writeFile(join(outputPath, fileName), content, encoding);
+		console.log(`ファイルを保存しました: ${fileName}`);
+		return fileName;
+	} catch (error) {
+		console.error(`ファイル保存エラー (${directory}):`, error);
+		return "";
+	}
+}
+
+// Vertex AI用の保存関数
 export async function saveOutputFile(outputData: {
 	timestamp: string;
 	inputUrl: string;
 	isYouTube: boolean;
 	processingTime: number;
 	result: string;
+	eventId: string;
 }) {
-	const outputPath = join(process.cwd(), "output");
-	const fileName = `result-${Date.now()}.json`;
+	return saveFile({
+		content: JSON.stringify(outputData, null, 2),
+		directory: "vertexai",
+		eventId: outputData.eventId,
+		extension: "json",
+	});
+}
 
-	try {
-		await mkdir(outputPath, { recursive: true });
-		await writeFile(
-			join(outputPath, fileName),
-			JSON.stringify(outputData, null, 2),
-			"utf-8",
-		);
-		console.log(`結果を保存しました: ${fileName}`);
-		return fileName;
-	} catch (error) {
-		console.error("ファイル保存エラー:", error);
-		return "";
-	}
+// Text-to-Speech用の保存関数
+export async function saveSpeechFile(
+	audioContent: Uint8Array,
+	eventId: string,
+	index: number,
+) {
+	return saveFile({
+		content: audioContent,
+		directory: "audio",
+		eventId: eventId,
+		suffix: index,
+		extension: "mp3",
+		encoding: "binary",
+	});
 }

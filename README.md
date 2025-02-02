@@ -163,3 +163,35 @@ long output token length is not enabled for this request
 }
 
 ```
+
+## text to speech
+
+[text to speech](https://cloud.google.com/text-to-speech/docs/create-audio-text-console?hl=ja)
+[github google-cloud-node](https://github.com/googleapis/google-cloud-node/tree/main/packages/google-cloud-texttospeech)
+
+```
+
+#Request
+Please extract the information from the specified article exactly as it is, without any processing or summarization.
+Maintain the structure of headings and body text without deletion or modification.
+
+DO NOT INCLUDE summaries, interpretations, or opinions about the event.
+you MUST EXTRACT ONLY the raw article content exactly as it appears.
+
+## Extract
+Extract the article's body text exactly as they appear.
+No summarization, interpretation, comments, or analysis by AI
+Do not change the order of sentences or omit any content.
+Preserve the original wording of the article as much as possible.
+
+## Translation
+Then, translate the extracted text: if it's in English, translate it to Japanese; if it's in Japanese, translate it to English.
+Each sentence should be treated as a single unit.
+Output Format
+
+## Output
+Output the result as a pure JSON array without any additional formatting, like this:
+[{"en": "xxxxxx", "ja": "xxxxx"}, {"en": "xxxxxx", "ja": "xxxxx"}]
+Ensure that the response contains only the JSON array, without any extra text, code blocks, or formatting characters.
+
+```

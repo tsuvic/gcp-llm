@@ -1,3 +1,6 @@
+import { mkdir, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import { TextToSpeechClient } from "@google-cloud/text-to-speech";
 import {
 	HarmBlockThreshold,
 	HarmCategory,
@@ -10,10 +13,12 @@ import type { TranslationPair } from "~/types";
 import {
 	createWebPageTranscriptionAndTranslationRequest,
 	saveOutputFile,
+	saveSpeechFile,
 } from "../function";
+import { count, res } from "../response";
 
-const MAX_INPUT_TOKENS = 5000;
-const MAX_OUTPUT_TOKENS = 100;
+const MAX_INPUT_TOKENS = 3000;
+const MAX_OUTPUT_TOKENS = 2000;
 
 export const meta: MetaFunction = () => {
 	return [
@@ -29,6 +34,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	try {
 		const formData = await request.formData();
 		const url = formData.get("fileUri");
+		const eventId = `${Date.now()}`;
 
 		if (!url) {
 			return {
@@ -56,7 +62,23 @@ export async function action({ request }: ActionFunctionArgs) {
 				safetySettings: [
 					{
 						category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-						threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
+						threshold: HarmBlockThreshold.BLOCK_NONE,
+					},
+					{
+						category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+						threshold: HarmBlockThreshold.BLOCK_NONE,
+					},
+					{
+						category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+						threshold: HarmBlockThreshold.BLOCK_NONE,
+					},
+					{
+						category: HarmCategory.HARM_CATEGORY_UNSPECIFIED,
+						threshold: HarmBlockThreshold.BLOCK_NONE,
+					},
+					{
+						category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+						threshold: HarmBlockThreshold.BLOCK_NONE,
 					},
 				],
 				generationConfig: {
@@ -64,10 +86,10 @@ export async function action({ request }: ActionFunctionArgs) {
 					temperature: 0.5,
 					topP: 0.95,
 				},
-				systemInstruction: {
-					role: "system",
-					parts: [{ text: "You are a helpful assistant." }],
-				},
+				// systemInstruction: {
+				// 	role: "system",
+				// 	parts: [{ text: "You are a helpful assistant." }],
+				// },
 			},
 			{
 				timeout: 300000, //milliseconds
@@ -111,10 +133,9 @@ export async function action({ request }: ActionFunctionArgs) {
 
 			const result = await model.generateContent(req);
 			const res = await result.response;
-			console.log(res.candidates?.[0]?.content);
-			console.log(res);
-
-			const endTime = performance.now();
+			const content = res.candidates?.[0]?.content;
+			console.log("content", content);
+			console.log("res", res);
 
 			// 最大トークン制限に達したかチェック
 			const isMaxTokensReached =
@@ -122,13 +143,32 @@ export async function action({ request }: ActionFunctionArgs) {
 
 			// JSONパースを試みる
 			let translationPairs: TranslationPair[] = [];
-			const rawText = res.candidates?.[0]?.content?.parts?.[0]?.text || "";
+			const rawText = content?.parts?.[0]?.text || "";
 
 			try {
 				if (isMaxTokensReached) {
 					let fixedJson = rawText;
-					if (fixedJson.lastIndexOf('", "ja": "') !== -1) {
-						// ", "ja": "で終わっている場合、"}]"を補完
+					const len = fixedJson.length - 1;
+					if (fixedJson.lastIndexOf('",') === len) {
+						fixedJson = `${fixedJson} "ja": "（処理が途中で終了しました）"}]`;
+					} else if (fixedJson.lastIndexOf('", ') === len) {
+						fixedJson = `${fixedJson}"ja": "（処理が途中で終了しました）"}]`;
+					} else if (fixedJson.lastIndexOf('", "') === len) {
+						fixedJson = `${fixedJson}ja": "（処理が途中で終了しました）"}]`;
+					} else if (fixedJson.lastIndexOf('", "j') === len) {
+						fixedJson = `${fixedJson}a": "（処理が途中で終了しました）"}]`;
+					} else if (fixedJson.lastIndexOf('", "ja') === len) {
+						fixedJson = `${fixedJson}": "（処理が途中で終了しました）"}]`;
+					} else if (fixedJson.lastIndexOf('", "ja"') === len) {
+						fixedJson = `${fixedJson}: "（処理が途中で終了しました）"}]`;
+					} else if (fixedJson.lastIndexOf('", "ja":') === len) {
+						fixedJson = `${fixedJson} "（処理が途中で終了しました）"}]`;
+					} else if (fixedJson.lastIndexOf('", "ja": ') === len) {
+						fixedJson = `${fixedJson}"（処理が途中で終了しました）"}]`;
+					} else if (fixedJson.lastIndexOf('", "ja": "') === len) {
+						fixedJson = `${fixedJson}（処理が途中で終了しました）"}]`;
+						// 存在した場合。通常最初のペア崩れを拾うことを想定
+					} else if (fixedJson.lastIndexOf('", "ja": "') !== -1) {
 						fixedJson = `${fixedJson} "}]`;
 					} else if (fixedJson.lastIndexOf('{"en": "') !== -1) {
 						fixedJson = `${fixedJson} ", "ja": "（処理が途中で終了しました）"}]`;
@@ -163,20 +203,54 @@ export async function action({ request }: ActionFunctionArgs) {
 				};
 			}
 
+			const endTime = performance.now();
 			const processingTime = endTime - startTime;
 			console.log(`処理時間: ${processingTime.toFixed(2)}ミリ秒`);
 
+			// vertexai 結果を保存
 			const outputData = {
 				timestamp: new Date().toISOString(),
 				inputUrl: url.toString(),
 				isYouTube: false,
 				processingTime: processingTime,
 				result: JSON.stringify(translationPairs),
+				eventId: eventId, // イベントIDを追加
 				finishReason: res.candidates?.[0]?.finishReason || "UNKNOWN",
 				counTotalTokens: count.totalTokens,
 				totalTokens: res.usageMetadata?.totalTokenCount || 0,
 			};
 			const fileNameForTranscription = await saveOutputFile(outputData);
+
+			// text to speech
+			const client = new TextToSpeechClient();
+			const audioContents: string[] = []; // Base64エンコードした音声データを保持する配列
+
+			for (let i = 0; i < translationPairs.length; i++) {
+				const [response] = await client.synthesizeSpeech({
+					input: { text: translationPairs[i].en },
+					voice: { languageCode: "en-US", name: "en-US-Neural2-I" },
+					audioConfig: {
+						audioEncoding: "MP3",
+						sampleRateHertz: 24000,
+						effectsProfileId: ["handset-class-device"],
+						pitch: 0,
+						speakingRate: 1.0,
+					},
+				});
+
+				if (
+					response.audioContent &&
+					response.audioContent instanceof Uint8Array
+				) {
+					// ファイル保存
+					await saveSpeechFile(response.audioContent, eventId, i + 1);
+					// Base64エンコード
+					const base64Audio = Buffer.from(response.audioContent).toString(
+						"base64",
+					);
+					audioContents.push(`data:audio/mp3;base64,${base64Audio}`);
+				}
+			}
 
 			return {
 				status: "success",
@@ -187,6 +261,7 @@ export async function action({ request }: ActionFunctionArgs) {
 				finishReason: res.candidates?.[0]?.finishReason || "UNKNOWN",
 				countTotalTokens: count.totalTokens,
 				totalTokens: res.usageMetadata?.totalTokenCount || 0,
+				audioContents, // Base64エンコードした音声データを返す
 			};
 		} catch (error) {
 			console.error("AI処理エラー:", error);
@@ -254,7 +329,7 @@ export default function Index() {
 								type="submit"
 								disabled={isProcessing}
 								className={`px-6 py-3 text-lg font-medium text-white w-48
-										rounded-lg focus:outline-none focus:ring-2 
+										rounded-lg focus:outline-none focus:ring-2
 										focus:ring-blue-500 focus:ring-offset-2 transition duration-200 ease-in-out
 										${
 											isProcessing
@@ -289,7 +364,7 @@ export default function Index() {
 										<span>処理中...</span>
 									</div>
 								) : (
-									"文字起こしを開始"
+									"実行"
 								)}
 							</button>
 						</div>
@@ -312,19 +387,99 @@ export default function Index() {
 								{actionData.status === "success" ? (
 									<div className="flex-1 flex flex-col overflow-hidden">
 										<div className="flex-1 overflow-y-auto">
-											{actionData.response?.map((pair) => (
-												<div
-													key={pair.en.slice(0, 20)}
-													className="mb-6 last:mb-0 p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-												>
-													<p className="mb-2 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-														{pair.en}
-													</p>
-													<p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-														{pair.ja}
-													</p>
-												</div>
-											))}
+											{actionData.response && actionData.response.length > 0 ? (
+												actionData.response.map((pair, index) => (
+													<div
+														key={pair.en.slice(0, 20)}
+														className="mb-6 last:mb-0 p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50"
+													>
+														<p className="mb-2 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+															{pair.en}
+														</p>
+														<p className="mb-2 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+															{pair.ja}
+														</p>
+														{actionData.audioContents?.[index] && (
+															<div className="flex items-center gap-4 bg-[#2c2c2c] dark:bg-gray-900 rounded-lg p-2">
+																<div className="flex items-center gap-2">
+																	<button
+																		type="button"
+																		onClick={() => {
+																			const audio = document.getElementById(
+																				`audio-${index}`,
+																			) as HTMLAudioElement;
+																			if (audio) {
+																				audio.currentTime = Math.max(
+																					0,
+																					audio.currentTime - 2,
+																				);
+																			}
+																		}}
+																		className="p-2 text-gray-300 hover:text-white dark:text-gray-300 dark:hover:text-white bg-[#2c2c2c] dark:bg-gray-900 hover:bg-[#444444] dark:hover:bg-gray-800 rounded-lg transition-all"
+																		aria-label="2秒戻る"
+																	>
+																		<svg
+																			xmlns="http://www.w3.org/2000/svg"
+																			width="28"
+																			height="28"
+																			viewBox="0 0 24 24"
+																			fill="none"
+																			stroke="currentColor"
+																			strokeWidth="2"
+																			strokeLinecap="round"
+																			strokeLinejoin="round"
+																		>
+																			<path d="m12 8-4 4 4 4" />
+																		</svg>
+																	</button>
+																	<button
+																		type="button"
+																		onClick={() => {
+																			const audio = document.getElementById(
+																				`audio-${index}`,
+																			) as HTMLAudioElement;
+																			if (audio) {
+																				audio.currentTime = Math.min(
+																					audio.duration,
+																					audio.currentTime + 2,
+																				);
+																			}
+																		}}
+																		className="p-2 text-gray-300 hover:text-white dark:text-gray-300 dark:hover:text-white bg-[#2c2c2c] dark:bg-gray-900 hover:bg-[#444444] dark:hover:bg-gray-800 rounded-lg transition-all"
+																		aria-label="2秒進む"
+																	>
+																		<svg
+																			xmlns="http://www.w3.org/2000/svg"
+																			width="28"
+																			height="28"
+																			viewBox="0 0 24 24"
+																			fill="none"
+																			stroke="currentColor"
+																			strokeWidth="2"
+																			strokeLinecap="round"
+																			strokeLinejoin="round"
+																		>
+																			<path d="m12 16 4-4-4-4" />
+																		</svg>
+																	</button>
+																</div>
+																<audio
+																	id={`audio-${index}`}
+																	controls
+																	className="flex-1"
+																	src={actionData.audioContents[index]}
+																>
+																	<track kind="captions" />
+																</audio>
+															</div>
+														)}
+													</div>
+												))
+											) : (
+												<p className="text-sm text-gray-500 dark:text-gray-400">
+													データがありません
+												</p>
+											)}
 										</div>
 									</div>
 								) : (
