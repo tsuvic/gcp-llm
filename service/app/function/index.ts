@@ -236,7 +236,7 @@ export async function saveOutputFile(outputData: {
 }) {
 	return saveFile({
 		content: JSON.stringify(outputData, null, 2),
-		directory: "vertexai",
+		directory: "text",
 		eventId: outputData.eventId,
 		extension: "json",
 	});

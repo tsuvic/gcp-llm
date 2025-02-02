@@ -1,24 +1,11 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
-import { TextToSpeechClient } from "@google-cloud/text-to-speech";
-import {
-	HarmBlockThreshold,
-	HarmCategory,
-	VertexAI,
-} from "@google-cloud/vertexai";
 import type { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Form, useActionData, useNavigation } from "@remix-run/react";
 import { useState } from "react";
-import type { TranslationPair } from "~/types";
 import {
-	createWebPageTranscriptionAndTranslationRequest,
-	saveOutputFile,
-	saveSpeechFile,
-} from "../function";
-import { count, res } from "../response";
-
-const MAX_INPUT_TOKENS = 3000;
-const MAX_OUTPUT_TOKENS = 2000;
+	getAudioContents,
+	handleError,
+	processWebContent,
+} from "../function/process";
 
 export const meta: MetaFunction = () => {
 	return [
@@ -44,255 +31,24 @@ export async function action({ request }: ActionFunctionArgs) {
 			};
 		}
 
-		if (!process.env.GCP_PROJECT_ID) {
-			throw new Error("GCP_PROJECT_ID is not set");
-		}
-
-		// AIモデルの初期化
-		const project = process.env.GCP_PROJECT_ID;
-		const location = "asia-northeast1";
-		const vertexAI = new VertexAI({
-			project,
-			location,
-		});
-
-		const model = vertexAI.preview.getGenerativeModel(
-			{
-				model: "gemini-1.5-flash",
-				safetySettings: [
-					{
-						category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-						threshold: HarmBlockThreshold.BLOCK_NONE,
-					},
-					{
-						category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-						threshold: HarmBlockThreshold.BLOCK_NONE,
-					},
-					{
-						category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-						threshold: HarmBlockThreshold.BLOCK_NONE,
-					},
-					{
-						category: HarmCategory.HARM_CATEGORY_UNSPECIFIED,
-						threshold: HarmBlockThreshold.BLOCK_NONE,
-					},
-					{
-						category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-						threshold: HarmBlockThreshold.BLOCK_NONE,
-					},
-				],
-				generationConfig: {
-					maxOutputTokens: MAX_OUTPUT_TOKENS,
-					temperature: 0.5,
-					topP: 0.95,
-				},
-				// systemInstruction: {
-				// 	role: "system",
-				// 	parts: [{ text: "You are a helpful assistant." }],
-				// },
-			},
-			{
-				timeout: 300000, //milliseconds
-			},
+		const result = await processWebContent(url.toString(), eventId);
+		const audioContents = await getAudioContents(
+			eventId,
+			result.translationPairs.length,
 		);
 
-		const startTime = performance.now();
-		console.log(
-			`処理開始: ${new Date().toLocaleString("ja-JP", {
-				timeZone: "Asia/Tokyo",
-			})}`,
-		);
-
-		try {
-			// // YouTubeのURL形式をチェック
-			// const youtubeUrlPattern =
-			// 	/^(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
-
-			// // YouTubeのURLの場合はエラー
-			// if (youtubeUrlPattern.test(url.toString())) {
-			// 	return {
-			// 		status: "error",
-			// 		message: "エラー",
-			// 		error: "YouTubeのURLは現在サポートしていません",
-			// 	};
-			// }
-
-			const req = createWebPageTranscriptionAndTranslationRequest(url);
-			const count = await model.countTokens(req);
-			console.log(`トークン数: ${count.totalTokens}`);
-			console.log(`請求文字数: ${count.totalBillableCharacters}`);
-
-			// トークン数のチェックを追加
-			if (count.totalTokens > MAX_INPUT_TOKENS) {
-				return {
-					status: "error",
-					message: "エラー",
-					error: `トークン数が制限を超えています（${count.totalTokens} > ${MAX_INPUT_TOKENS.toLocaleString()}）。より短いコンテンツを指定してください。`,
-				};
-			}
-
-			const result = await model.generateContent(req);
-			const res = await result.response;
-			const content = res.candidates?.[0]?.content;
-			console.log("content", content);
-			console.log("res", res);
-
-			// 最大トークン制限に達したかチェック
-			const isMaxTokensReached =
-				res.candidates?.[0]?.finishReason === "MAX_TOKENS";
-
-			// JSONパースを試みる
-			let translationPairs: TranslationPair[] = [];
-			const rawText = content?.parts?.[0]?.text || "";
-
-			try {
-				if (isMaxTokensReached) {
-					let fixedJson = rawText;
-					const len = fixedJson.length - 1;
-					if (fixedJson.lastIndexOf('",') === len) {
-						fixedJson = `${fixedJson} "ja": "（処理が途中で終了しました）"}]`;
-					} else if (fixedJson.lastIndexOf('", ') === len) {
-						fixedJson = `${fixedJson}"ja": "（処理が途中で終了しました）"}]`;
-					} else if (fixedJson.lastIndexOf('", "') === len) {
-						fixedJson = `${fixedJson}ja": "（処理が途中で終了しました）"}]`;
-					} else if (fixedJson.lastIndexOf('", "j') === len) {
-						fixedJson = `${fixedJson}a": "（処理が途中で終了しました）"}]`;
-					} else if (fixedJson.lastIndexOf('", "ja') === len) {
-						fixedJson = `${fixedJson}": "（処理が途中で終了しました）"}]`;
-					} else if (fixedJson.lastIndexOf('", "ja"') === len) {
-						fixedJson = `${fixedJson}: "（処理が途中で終了しました）"}]`;
-					} else if (fixedJson.lastIndexOf('", "ja":') === len) {
-						fixedJson = `${fixedJson} "（処理が途中で終了しました）"}]`;
-					} else if (fixedJson.lastIndexOf('", "ja": ') === len) {
-						fixedJson = `${fixedJson}"（処理が途中で終了しました）"}]`;
-					} else if (fixedJson.lastIndexOf('", "ja": "') === len) {
-						fixedJson = `${fixedJson}（処理が途中で終了しました）"}]`;
-						// 存在した場合。通常最初のペア崩れを拾うことを想定
-					} else if (fixedJson.lastIndexOf('", "ja": "') !== -1) {
-						fixedJson = `${fixedJson} "}]`;
-					} else if (fixedJson.lastIndexOf('{"en": "') !== -1) {
-						fixedJson = `${fixedJson} ", "ja": "（処理が途中で終了しました）"}]`;
-					} else {
-						throw new Error("有効なペアが見つかりませんでした");
-					}
-
-					console.log(fixedJson);
-
-					try {
-						translationPairs = JSON.parse(fixedJson) as TranslationPair[];
-					} catch (parseError) {
-						console.error("JSONパースエラー:", parseError);
-						throw new Error("結果の解析に失敗しました");
-					}
-				} else {
-					// 通常のJSONパース
-					translationPairs = JSON.parse(rawText) as TranslationPair[];
-				}
-
-				if (isMaxTokensReached) {
-					console.log(
-						"最大トークン数に達したため、一部のペアは補完して返します",
-					);
-				}
-			} catch (parseError) {
-				console.error("JSONパースエラー:", parseError);
-				return {
-					status: "error",
-					message: "エラー",
-					error: "結果の解析に失敗しました",
-				};
-			}
-
-			const endTime = performance.now();
-			const processingTime = endTime - startTime;
-			console.log(`処理時間: ${processingTime.toFixed(2)}ミリ秒`);
-
-			// vertexai 結果を保存
-			const outputData = {
-				timestamp: new Date().toISOString(),
-				inputUrl: url.toString(),
-				isYouTube: false,
-				processingTime: processingTime,
-				result: JSON.stringify(translationPairs),
-				eventId: eventId, // イベントIDを追加
-				finishReason: res.candidates?.[0]?.finishReason || "UNKNOWN",
-				counTotalTokens: count.totalTokens,
-				totalTokens: res.usageMetadata?.totalTokenCount || 0,
-			};
-			const fileNameForTranscription = await saveOutputFile(outputData);
-
-			// text to speech
-			const client = new TextToSpeechClient();
-			const audioContents: string[] = []; // Base64エンコードした音声データを保持する配列
-
-			for (let i = 0; i < translationPairs.length; i++) {
-				const [response] = await client.synthesizeSpeech({
-					input: { text: translationPairs[i].en },
-					voice: { languageCode: "en-US", name: "en-US-Neural2-I" },
-					audioConfig: {
-						audioEncoding: "MP3",
-						sampleRateHertz: 24000,
-						effectsProfileId: ["handset-class-device"],
-						pitch: 0,
-						speakingRate: 1.0,
-					},
-				});
-
-				if (
-					response.audioContent &&
-					response.audioContent instanceof Uint8Array
-				) {
-					// ファイル保存
-					await saveSpeechFile(response.audioContent, eventId, i + 1);
-					// Base64エンコード
-					const base64Audio = Buffer.from(response.audioContent).toString(
-						"base64",
-					);
-					audioContents.push(`data:audio/mp3;base64,${base64Audio}`);
-				}
-			}
-
-			return {
-				status: "success",
-				message: "リクエストが正常に処理されました",
-				response: translationPairs,
-				processingTime: `${processingTime.toFixed(2)}ミリ秒`,
-				savedFile: fileNameForTranscription,
-				finishReason: res.candidates?.[0]?.finishReason || "UNKNOWN",
-				countTotalTokens: count.totalTokens,
-				totalTokens: res.usageMetadata?.totalTokenCount || 0,
-				audioContents, // Base64エンコードした音声データを返す
-			};
-		} catch (error) {
-			console.error("AI処理エラー:", error);
-
-			// robots.txtによるブロックのエラーメッセージをチェック
-			if (
-				error instanceof Error &&
-				error.message.includes("URL_ROBOTED-ROBOTED_DENIED")
-			) {
-				return {
-					status: "error",
-					message: "アクセス制限エラー",
-					error:
-						"このウェブサイトはAIによる自動アクセスを許可していません。アクセスがブロックされています。",
-				};
-			}
-
-			// その他のエラー
-			return {
-				status: "error",
-				message: "AI処理中にエラーが発生しました",
-				error: error instanceof Error ? error.message : "不明なエラー",
-			};
-		}
-	} catch (error) {
-		console.error("サーバーエラー:", error);
 		return {
-			status: "500",
-			message: "サーバーでエラーが発生しました",
-			error: error instanceof Error ? error.message : "不明なエラー",
+			status: "success",
+			message: "リクエストが正常に処理されました",
+			response: result.translationPairs,
+			processingTime: `${result.processingTime.toFixed(2)}ミリ秒`,
+			finishReason: result.finishReason,
+			countTotalTokens: result.countTotalTokens,
+			totalTokens: result.totalTokens,
+			audioContents,
 		};
+	} catch (error) {
+		return handleError(error);
 	}
 }
 
