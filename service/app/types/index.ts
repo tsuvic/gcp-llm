@@ -1,3 +1,5 @@
+import type { Timestamp } from "@google-cloud/firestore";
+
 export type Contents = {
 	title: string;
 	body: {
@@ -15,3 +17,22 @@ export type ActionResponse = {
 	savedFile?: string;
 	usageTokens?: number;
 };
+
+export interface ContentSetCollection {
+	url: string; // 元のURL
+	audioCount: number; // 音声ファイルの数
+	title: string; // コンテンツのタイトル
+	createdAt: Timestamp; // 作成日時
+	updatedAt: Timestamp; // 更新日時
+	status: "processing" | "completed" | "error"; // 処理状態
+}
+
+export interface ContentGetCollection {
+	contentId: string; // コンテンツのID
+	url: string; // 元のURL
+	audioCount: number; // 音声ファイルの数
+	title: string; // コンテンツのタイトル
+	createdAt: Timestamp; // 作成日時
+	updatedAt: Timestamp; // 更新日時
+	status: "processing" | "completed" | "error"; // 処理状態
+}

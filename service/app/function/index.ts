@@ -190,7 +190,7 @@ If you include anything extra, it will be absolutely unacceptable.
 
 1. Extract only the main article content, exactly as it is, without HTML or metadata.  
 2. Translate each sentence separately: English to Japanese, Japanese to English.  
-3. Output the result in this format: {"title": "xxxx", {"body": [{"en": "xxxxxx", "ja": "xxxxx"}, {"en": "xxxxxx", "ja": "xxxxx"}]}
+3. Output the result just like this: {"title": "xxxx", {"body": [{"en": "xxxxxx", "ja": "xxxxx"}, {"en": "xxxxxx", "ja": "xxxxx"}]}
 4. Absolutely no extra text, code blocks, or formatting characters.  
 
 `,

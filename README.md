@@ -195,3 +195,13 @@ Output the result as a pure JSON array without any additional formatting, like t
 Ensure that the response contains only the JSON array, without any extra text, code blocks, or formatting characters.
 
 ```
+
+curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "fileUri=https://www3.nhk.or.jp/shutoken-news/20250202/1000113831.html" http://localhost:5173/share
+
+## cloud storage
+
+[text](https://github.com/googleapis/nodejs-storage)
+
+## firestore
+
+[text](https://github.com/googleapis/nodejs-firestore)
