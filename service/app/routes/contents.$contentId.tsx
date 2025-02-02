@@ -64,13 +64,12 @@ export default function ContentDetail() {
 		<div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
 			<Header />
 
-			<main className="max-w-7xl mx-auto px-2 sm:px-4 py-6">
-				<div className="flex items-center gap-4 mb-6">
-					<h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+			<main className="max-w-5xl mx-auto px-2 sm:px-4 py-4">
+				<div className="flex flex-col items-center mb-6">
+					<h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
 						{content.title}
 					</h1>
-					<div className="h-8 w-px bg-gradient-to-b from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600" />
-					<p className="text-sm text-gray-600 dark:text-gray-400 truncate flex-1">
+					<p className="text-sm text-gray-600 dark:text-gray-400 truncate">
 						{content.url}
 					</p>
 				</div>
@@ -79,20 +78,20 @@ export default function ContentDetail() {
 					{transcript.body.map((pair, index) => (
 						<div
 							key={pair.en.slice(0, 20)}
-							className="p-4 sm:p-6 rounded-lg bg-white dark:bg-gray-800 shadow-sm"
+							className="p-3 sm:p-4 rounded-lg bg-white dark:bg-gray-800 shadow-sm"
 						>
-							<p className="text-base leading-relaxed text-gray-900 dark:text-gray-100 mb-3">
+							<p className="text-sm leading-relaxed text-gray-900 dark:text-gray-100 mb-2">
 								{pair.en}
 							</p>
-							<p className="text-base leading-relaxed text-gray-700 dark:text-gray-300 mb-4">
+							<p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300 mb-3">
 								{pair.ja}
 							</p>
 							{audioContents[index] && (
-								<div className="space-y-2">
+								<div className="space-y-1.5">
 									<audio
 										id={`audio-${index}`}
 										controls
-										className="w-full h-8"
+										className="w-full h-7"
 										src={audioContents[index]}
 									>
 										<track kind="captions" />
@@ -111,9 +110,21 @@ export default function ContentDetail() {
 													);
 												}
 											}}
-											className="flex-1 py-1.5 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-all"
+											className="flex-1 py-1 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-all"
 										>
-											2秒戻る
+											<svg
+												className="w-4 h-4"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth={2}
+													d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
+												/>
+											</svg>
 										</button>
 										<button
 											type="button"
@@ -128,9 +139,21 @@ export default function ContentDetail() {
 													);
 												}
 											}}
-											className="flex-1 py-1.5 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-all"
+											className="flex-1 py-1 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-all"
 										>
-											2秒進む
+											<svg
+												className="w-4 h-4"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth={2}
+													d="M13 5l7 7-7 7M5 5l7 7-7 7"
+												/>
+											</svg>
 										</button>
 									</div>
 								</div>

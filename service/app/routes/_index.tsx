@@ -63,19 +63,19 @@ export default function Index() {
 		<div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
 			<Header />
 
-			<main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+			<main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
 				{/* PC表示用フィルター */}
-				<div className="hidden md:flex items-start mb-8 gap-4">
+				<div className="hidden md:flex items-start mb-6 gap-4">
 					<Link
 						to="/save"
-						className="w-32 h-10 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-center flex items-center justify-center text-sm font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-all shadow-sm hover:shadow-md"
+						className="w-28 h-8 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-center flex items-center justify-center text-xs font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-all shadow-sm hover:shadow-md"
 					>
 						新規作成
 					</Link>
 					<div className="flex-1 grid grid-cols-12 gap-4">
 						<input
 							type="text"
-							placeholder="タイトルで検索"
+							placeholder="Filter with title"
 							value={titleFilter}
 							onChange={(e) => setTitleFilter(e.target.value)}
 							className="col-span-3 px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 
@@ -83,7 +83,7 @@ export default function Index() {
 						/>
 						<input
 							type="text"
-							placeholder="URLで検索"
+							placeholder="Filter with URL"
 							value={urlFilter}
 							onChange={(e) => setUrlFilter(e.target.value)}
 							className="col-span-3 px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 
@@ -125,7 +125,7 @@ export default function Index() {
 									: "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
 							}`}
 						>
-							タイトル
+							Title
 						</button>
 						<button
 							onClick={() => setActiveFilter("url")}
@@ -145,14 +145,14 @@ export default function Index() {
 									: "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
 							}`}
 						>
-							日付
+							Dates
 						</button>
 					</div>
 
 					{activeFilter === "title" && (
 						<input
 							type="text"
-							placeholder="タイトルで検索"
+							placeholder="Filter with title"
 							value={titleFilter}
 							onChange={(e) => setTitleFilter(e.target.value)}
 							className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 
@@ -162,7 +162,7 @@ export default function Index() {
 					{activeFilter === "url" && (
 						<input
 							type="text"
-							placeholder="URLで検索"
+							placeholder="Filter with URL"
 							value={urlFilter}
 							onChange={(e) => setUrlFilter(e.target.value)}
 							className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 
