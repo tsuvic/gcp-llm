@@ -1,0 +1,10 @@
+{
+  "timestamp": "2025-02-02T03:01:22.695Z",
+  "inputUrl": "https://www3.nhk.or.jp/shutoken-news/20250202/1000113824.html",
+  "isYouTube": false,
+  "processingTime": 12534.44895195961,
+  "result": "[{\"en\":\"A large-scale road collapse occurred in Yashio City, Saitama Prefecture, where one man is missing. According to the fire department, a certain amount of water was confirmed in the hole after the evening of the 1st, and as of 8:30 p.m., work under the slope has been suspended to ensure safety.\",\"ja\":\"埼玉県八潮市で男性１人が安否不明になっている大規模な道路陥没事故で、消防 \"}]",
+  "finishReason": "MAX_TOKENS",
+  "counTotalTokens": 2380,
+  "totalTokens": 2486
+}

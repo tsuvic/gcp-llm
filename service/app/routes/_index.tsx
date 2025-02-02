@@ -12,7 +12,8 @@ import {
 	saveOutputFile,
 } from "../function";
 
-const MAX_TOKENS = 5000;
+const MAX_INPUT_TOKENS = 5000;
+const MAX_OUTPUT_TOKENS = 100;
 
 export const meta: MetaFunction = () => {
 	return [
@@ -59,7 +60,7 @@ export async function action({ request }: ActionFunctionArgs) {
 					},
 				],
 				generationConfig: {
-					maxOutputTokens: 8000,
+					maxOutputTokens: MAX_OUTPUT_TOKENS,
 					temperature: 0.5,
 					topP: 0.95,
 				},
@@ -100,32 +101,70 @@ export async function action({ request }: ActionFunctionArgs) {
 			console.log(`請求文字数: ${count.totalBillableCharacters}`);
 
 			// トークン数のチェックを追加
-			if (count.totalTokens > MAX_TOKENS) {
+			if (count.totalTokens > MAX_INPUT_TOKENS) {
 				return {
 					status: "error",
 					message: "エラー",
-					error: `トークン数が制限を超えています（${count.totalTokens} > ${MAX_TOKENS.toLocaleString()}）。より短いコンテンツを指定してください。`,
+					error: `トークン数が制限を超えています（${count.totalTokens} > ${MAX_INPUT_TOKENS.toLocaleString()}）。より短いコンテンツを指定してください。`,
 				};
 			}
 
 			const result = await model.generateContent(req);
 			const res = await result.response;
-
-			const endTime = performance.now();
-			const processingTime = endTime - startTime;
-
-			console.log(
-				`処理終了: ${new Date().toLocaleString("ja-JP", {
-					timeZone: "Asia/Tokyo",
-				})}`,
-			);
-			console.log(`処理時間: ${processingTime.toFixed(2)}ミリ秒`);
 			console.log(res.candidates?.[0]?.content);
 			console.log(res);
 
-			const translationPairs = JSON.parse(
-				res.candidates?.[0]?.content?.parts?.[0]?.text || "[]",
-			) as TranslationPair[];
+			const endTime = performance.now();
+
+			// 最大トークン制限に達したかチェック
+			const isMaxTokensReached =
+				res.candidates?.[0]?.finishReason === "MAX_TOKENS";
+
+			// JSONパースを試みる
+			let translationPairs: TranslationPair[] = [];
+			const rawText = res.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+			try {
+				if (isMaxTokensReached) {
+					let fixedJson = rawText;
+					if (fixedJson.lastIndexOf('", "ja": "') !== -1) {
+						// ", "ja": "で終わっている場合、"}]"を補完
+						fixedJson = `${fixedJson} "}]`;
+					} else if (fixedJson.lastIndexOf('{"en": "') !== -1) {
+						fixedJson = `${fixedJson} ", "ja": "（処理が途中で終了しました）"}]`;
+					} else {
+						throw new Error("有効なペアが見つかりませんでした");
+					}
+
+					console.log(fixedJson);
+
+					try {
+						translationPairs = JSON.parse(fixedJson) as TranslationPair[];
+					} catch (parseError) {
+						console.error("JSONパースエラー:", parseError);
+						throw new Error("結果の解析に失敗しました");
+					}
+				} else {
+					// 通常のJSONパース
+					translationPairs = JSON.parse(rawText) as TranslationPair[];
+				}
+
+				if (isMaxTokensReached) {
+					console.log(
+						"最大トークン数に達したため、一部のペアは補完して返します",
+					);
+				}
+			} catch (parseError) {
+				console.error("JSONパースエラー:", parseError);
+				return {
+					status: "error",
+					message: "エラー",
+					error: "結果の解析に失敗しました",
+				};
+			}
+
+			const processingTime = endTime - startTime;
+			console.log(`処理時間: ${processingTime.toFixed(2)}ミリ秒`);
 
 			const outputData = {
 				timestamp: new Date().toISOString(),
@@ -133,6 +172,9 @@ export async function action({ request }: ActionFunctionArgs) {
 				isYouTube: false,
 				processingTime: processingTime,
 				result: JSON.stringify(translationPairs),
+				finishReason: res.candidates?.[0]?.finishReason || "UNKNOWN",
+				counTotalTokens: count.totalTokens,
+				totalTokens: res.usageMetadata?.totalTokenCount || 0,
 			};
 			const fileNameForTranscription = await saveOutputFile(outputData);
 
@@ -142,12 +184,29 @@ export async function action({ request }: ActionFunctionArgs) {
 				response: translationPairs,
 				processingTime: `${processingTime.toFixed(2)}ミリ秒`,
 				savedFile: fileNameForTranscription,
-				usageTokens: res.usageMetadata?.totalTokenCount || 0,
+				finishReason: res.candidates?.[0]?.finishReason || "UNKNOWN",
+				countTotalTokens: count.totalTokens,
+				totalTokens: res.usageMetadata?.totalTokenCount || 0,
 			};
 		} catch (error) {
 			console.error("AI処理エラー:", error);
+
+			// robots.txtによるブロックのエラーメッセージをチェック
+			if (
+				error instanceof Error &&
+				error.message.includes("URL_ROBOTED-ROBOTED_DENIED")
+			) {
+				return {
+					status: "error",
+					message: "アクセス制限エラー",
+					error:
+						"このウェブサイトはAIによる自動アクセスを許可していません。アクセスがブロックされています。",
+				};
+			}
+
+			// その他のエラー
 			return {
-				status: "500",
+				status: "error",
 				message: "AI処理中にエラーが発生しました",
 				error: error instanceof Error ? error.message : "不明なエラー",
 			};
@@ -276,9 +335,14 @@ export default function Index() {
 								{actionData.status === "success" && (
 									<div className="flex-none mt-2 pt-2 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 space-y-1">
 										<div>
-											<p>書き起こし</p>
 											<p className="ml-4">
-												トークン数: {actionData.usageTokens}
+												トークン数: {actionData.totalTokens}
+											</p>
+											<p className="ml-4">
+												トークン数の見積: {actionData.countTotalTokens}
+											</p>
+											<p className="ml-4">
+												終了理由: {actionData.finishReason}
 											</p>
 											<p className="ml-4">
 												処理時間: {actionData.processingTime}
