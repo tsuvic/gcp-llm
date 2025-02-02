@@ -1,6 +1,5 @@
 import { Storage } from "@google-cloud/storage";
 import type { LoaderFunction, MetaFunction } from "@remix-run/node";
-import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import type { ContentGetCollection, Contents } from "~/types";
 import { Header } from "../components/Header";
@@ -65,33 +64,35 @@ export default function ContentDetail() {
 			<Header />
 
 			<main className="max-w-5xl mx-auto px-2 sm:px-4 py-4">
-				<div className="flex flex-col items-center mb-6">
-					<h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+				<div className="flex flex-col items-center mb-2">
+					<a
+						href={content.url}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="text-md font-bold text-gray-900 dark:text-gray-300 mb-1 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+					>
 						{content.title}
-					</h1>
-					<p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-						{content.url}
-					</p>
+					</a>
 				</div>
 
-				<div className="space-y-4">
+				<div className="space-y-3">
 					{transcript.body.map((pair, index) => (
 						<div
 							key={pair.en.slice(0, 20)}
-							className="p-3 sm:p-4 rounded-lg bg-white dark:bg-gray-800 shadow-sm"
+							className="p-1 sm:p-2 rounded-lg bg-white dark:bg-gray-800 shadow-sm"
 						>
-							<p className="text-sm leading-relaxed text-gray-900 dark:text-gray-100 mb-2">
+							<p className="text-sm leading-relaxed text-gray-900 dark:text-gray-100 mb-1 px-1">
 								{pair.en}
 							</p>
-							<p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300 mb-3">
+							<p className="text-xs leading-relaxed text-gray-600 dark:text-gray-400 mb-1 px-1">
 								{pair.ja}
 							</p>
 							{audioContents[index] && (
-								<div className="space-y-1.5">
+								<div className="space-y-2">
 									<audio
 										id={`audio-${index}`}
 										controls
-										className="w-full h-7"
+										className="w-full h-8"
 										src={audioContents[index]}
 									>
 										<track kind="captions" />
@@ -110,7 +111,7 @@ export default function ContentDetail() {
 													);
 												}
 											}}
-											className="flex-1 py-1 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-all"
+											className="flex-1 py-1.5 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-all"
 										>
 											<svg
 												className="w-4 h-4"
@@ -118,6 +119,7 @@ export default function ContentDetail() {
 												stroke="currentColor"
 												viewBox="0 0 24 24"
 											>
+												<title>Previous</title>
 												<path
 													strokeLinecap="round"
 													strokeLinejoin="round"
@@ -139,7 +141,7 @@ export default function ContentDetail() {
 													);
 												}
 											}}
-											className="flex-1 py-1 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-all"
+											className="flex-1 py-1.5 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-all"
 										>
 											<svg
 												className="w-4 h-4"
@@ -147,6 +149,7 @@ export default function ContentDetail() {
 												stroke="currentColor"
 												viewBox="0 0 24 24"
 											>
+												<title>Next</title>
 												<path
 													strokeLinecap="round"
 													strokeLinejoin="round"

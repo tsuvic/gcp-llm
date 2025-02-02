@@ -35,7 +35,7 @@ export async function uploadToCloudStorage(
 export async function uploadText(
 	content: string,
 	contentId: string,
-	userId: number,
+	userId: string,
 ) {
 	const path = `text/${userId}/${contentId}.json`;
 	return uploadToCloudStorage(content, path, "application/json");
@@ -45,7 +45,7 @@ export async function uploadAudio(
 	content: Buffer,
 	contentId: string,
 	index: number,
-	userId: number,
+	userId: string,
 ) {
 	const path = `audio/${userId}/${contentId}-${index}.mp3`;
 	return uploadToCloudStorage(content, path, "audio/mp3");

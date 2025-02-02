@@ -6,7 +6,7 @@ export async function action({ request }: ActionFunctionArgs) {
 		const formData = await request.formData();
 		const url = formData.get("fileUri");
 		const contentId = `${Date.now()}`;
-		const userId = 100;
+		const userId = "100";
 
 		if (!url) {
 			console.error("URLが指定されていません");

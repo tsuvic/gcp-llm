@@ -14,7 +14,7 @@ const MAX_OUTPUT_TOKENS = 300;
 export async function processWebContent(
 	url: string,
 	contentId: string,
-	userId: number,
+	userId: string,
 ) {
 	if (!process.env.GCP_PROJECT_ID) {
 		throw new Error("GCP_PROJECT_ID is not set");

@@ -1,23 +1,8 @@
-import { Timestamp } from "@google-cloud/firestore";
-import type {
-	ActionFunctionArgs,
-	LoaderFunction,
-	MetaFunction,
-} from "@remix-run/node";
-import { json } from "@remix-run/node";
-import {
-	Form,
-	Link,
-	useActionData,
-	useLoaderData,
-	useNavigation,
-} from "@remix-run/react";
+import type { LoaderFunction, MetaFunction } from "@remix-run/node";
+import { Link, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
-import { Header } from "~/components/Header";
-import { handleError, processWebContent } from "../function";
-import { db, getContents } from "../function/firebase";
-import { saveContent } from "../function/firebase";
-import type { ContentSetCollection } from "../types";
+import { Header } from "../components/Header";
+import { getContents } from "../function/firebase";
 
 export const meta: MetaFunction = () => {
 	return [{ title: "ARTICLEPLAY - コンテンツ一覧" }];
@@ -45,6 +30,11 @@ export default function Index() {
 		"title" | "url" | "date" | null
 	>(null);
 
+	// トグル機能を追加
+	const toggleFilter = (filter: "title" | "url" | "date") => {
+		setActiveFilter((current) => (current === filter ? null : filter));
+	};
+
 	const filteredContents = contents.filter((content, index) => {
 		const matchesTitle = content.title
 			.toLowerCase()
@@ -68,9 +58,9 @@ export default function Index() {
 				<div className="hidden md:flex items-start mb-6 gap-4">
 					<Link
 						to="/save"
-						className="w-28 h-8 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-center flex items-center justify-center text-xs font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-all shadow-sm hover:shadow-md"
+						className="w-28 h-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-center flex items-center justify-center text-xs font-medium rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
 					>
-						新規作成
+						Save new content
 					</Link>
 					<div className="flex-1 grid grid-cols-12 gap-4">
 						<input
@@ -109,40 +99,43 @@ export default function Index() {
 				</div>
 
 				{/* スマホ表示用フィルター */}
-				<div className="md:hidden space-y-4 mb-8">
+				<div className="md:hidden space-y-4 mb-6">
 					<Link
 						to="/save"
-						className="block w-full h-10 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-center flex items-center justify-center text-sm font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-all"
+						className="block w-full h-10 bg-gray-700 dark:bg-gray-200 text-white dark:text-gray-900 text-center flex items-center justify-center text-md font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-all"
 					>
-						新規作成
+						Save new content
 					</Link>
 					<div className="flex gap-2">
 						<button
-							onClick={() => setActiveFilter("title")}
-							className={`flex-1 px-3 py-2 text-sm rounded-lg border transition-colors ${
+							type="button"
+							onClick={() => toggleFilter("title")}
+							className={`flex-1 px-3 py-2 text-sm rounded-lg transition-colors ${
 								activeFilter === "title"
-									? "bg-blue-600 text-white border-blue-600"
-									: "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+									? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+									: "bg-gray-900 dark:bg-gray-800 text-white dark:text-gray-200"
 							}`}
 						>
 							Title
 						</button>
 						<button
-							onClick={() => setActiveFilter("url")}
-							className={`flex-1 px-3 py-2 text-sm rounded-lg border transition-colors ${
+							type="button"
+							onClick={() => toggleFilter("url")}
+							className={`flex-1 px-3 py-2 text-sm rounded-lg transition-colors ${
 								activeFilter === "url"
-									? "bg-blue-600 text-white border-blue-600"
-									: "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+									? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+									: "bg-gray-900 dark:bg-gray-800 text-white dark:text-gray-200"
 							}`}
 						>
 							URL
 						</button>
 						<button
-							onClick={() => setActiveFilter("date")}
-							className={`flex-1 px-3 py-2 text-sm rounded-lg border transition-colors ${
+							type="button"
+							onClick={() => toggleFilter("date")}
+							className={`flex-1 px-3 py-2 text-sm rounded-lg transition-colors ${
 								activeFilter === "date"
-									? "bg-blue-600 text-white border-blue-600"
-									: "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+									? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+									: "bg-gray-900 dark:bg-gray-800 text-white dark:text-gray-200"
 							}`}
 						>
 							Dates
@@ -176,14 +169,16 @@ export default function Index() {
 								value={startDate}
 								onChange={(e) => setStartDate(e.target.value)}
 								className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 
-										bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+										bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-xs"
+								placeholder="yyyy/mm/dd"
 							/>
 							<input
 								type="date"
 								value={endDate}
 								onChange={(e) => setEndDate(e.target.value)}
 								className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 
-										bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+										bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-xs"
+								placeholder="yyyy/mm/dd"
 							/>
 						</div>
 					)}
