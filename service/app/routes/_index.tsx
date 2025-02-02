@@ -60,7 +60,7 @@ export default function Index() {
 	});
 
 	return (
-		<div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+		<div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
 			<Header />
 
 			<main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -68,7 +68,7 @@ export default function Index() {
 				<div className="hidden md:flex items-start mb-8 gap-4">
 					<Link
 						to="/save"
-						className="w-32 h-10 bg-blue-600 text-white text-center flex items-center justify-center text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+						className="w-32 h-10 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-center flex items-center justify-center text-sm font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-all shadow-sm hover:shadow-md"
 					>
 						新規作成
 					</Link>
@@ -112,7 +112,7 @@ export default function Index() {
 				<div className="md:hidden space-y-4 mb-8">
 					<Link
 						to="/save"
-						className="block w-full h-10 bg-blue-600 text-white text-center flex items-center justify-center text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+						className="block w-full h-10 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-center flex items-center justify-center text-sm font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-all"
 					>
 						新規作成
 					</Link>
@@ -195,9 +195,10 @@ export default function Index() {
 						<Link
 							key={content.url}
 							to={`/contents/${content.contentId}`}
-							className="block h-16 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+							className="block h-16 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all border border-gray-100 dark:border-gray-700 hover:border-blue-100 dark:hover:border-blue-900 relative overflow-hidden"
 						>
-							<div className="flex h-full p-4 items-center">
+							<div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-transparent hover:from-blue-50 dark:hover:from-blue-900/20 transition-all" />
+							<div className="flex h-full p-4 items-center relative">
 								{/* PC表示用レイアウト */}
 								<div className="hidden md:block flex-1 min-w-0">
 									<h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">

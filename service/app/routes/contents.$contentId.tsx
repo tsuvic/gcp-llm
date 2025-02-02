@@ -61,108 +61,82 @@ export default function ContentDetail() {
 	const { content, transcript, audioContents } = useLoaderData<LoaderData>();
 
 	return (
-		<div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+		<div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
 			<Header />
 
-			<main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-				<h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">
-					{content.title}
-				</h1>
+			<main className="max-w-7xl mx-auto px-2 sm:px-4 py-6">
+				<div className="flex items-center gap-4 mb-6">
+					<h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+						{content.title}
+					</h1>
+					<div className="h-8 w-px bg-gradient-to-b from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600" />
+					<p className="text-sm text-gray-600 dark:text-gray-400 truncate flex-1">
+						{content.url}
+					</p>
+				</div>
 
-				<div className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 p-4">
-					<div className="flex-1 flex flex-col overflow-hidden">
-						<div className="flex-1 overflow-y-auto">
-							{transcript.body.map((pair, index) => (
-								<div
-									key={pair.en.slice(0, 20)}
-									className="mb-6 last:mb-0 p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50"
-								>
-									<p className="mb-2 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-										{pair.en}
-									</p>
-									<p className="mb-2 text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-										{pair.ja}
-									</p>
-									{audioContents[index] && (
-										<div className="flex items-center gap-4 bg-[#2c2c2c] dark:bg-gray-900 rounded-lg p-2">
-											<div className="flex items-center gap-2">
-												<button
-													type="button"
-													onClick={() => {
-														const audio = document.getElementById(
-															`audio-${index}`,
-														) as HTMLAudioElement;
-														if (audio) {
-															audio.currentTime = Math.max(
-																0,
-																audio.currentTime - 2,
-															);
-														}
-													}}
-													className="p-2 text-gray-300 hover:text-white dark:text-gray-300 dark:hover:text-white bg-[#2c2c2c] dark:bg-gray-900 hover:bg-[#444444] dark:hover:bg-gray-800 rounded-lg transition-all"
-													aria-label="2秒戻る"
-												>
-													<svg
-														xmlns="http://www.w3.org/2000/svg"
-														width="28"
-														height="28"
-														viewBox="0 0 24 24"
-														fill="none"
-														stroke="currentColor"
-														strokeWidth="2"
-														strokeLinecap="round"
-														strokeLinejoin="round"
-													>
-														<title>2秒戻る</title>
-														<path d="m12 8-4 4 4 4" />
-													</svg>
-												</button>
-												<button
-													type="button"
-													onClick={() => {
-														const audio = document.getElementById(
-															`audio-${index}`,
-														) as HTMLAudioElement;
-														if (audio) {
-															audio.currentTime = Math.min(
-																audio.duration,
-																audio.currentTime + 2,
-															);
-														}
-													}}
-													className="p-2 text-gray-300 hover:text-white dark:text-gray-300 dark:hover:text-white bg-[#2c2c2c] dark:bg-gray-900 hover:bg-[#444444] dark:hover:bg-gray-800 rounded-lg transition-all"
-													aria-label="2秒進む"
-												>
-													<svg
-														xmlns="http://www.w3.org/2000/svg"
-														width="28"
-														height="28"
-														viewBox="0 0 24 24"
-														fill="none"
-														stroke="currentColor"
-														strokeWidth="2"
-														strokeLinecap="round"
-														strokeLinejoin="round"
-													>
-														<title>2秒進む</title>
-														<path d="m12 16 4-4-4-4" />
-													</svg>
-												</button>
-											</div>
-											<audio
-												id={`audio-${index}`}
-												controls
-												className="flex-1"
-												src={audioContents[index]}
-											>
-												<track kind="captions" />
-											</audio>
-										</div>
-									)}
+				<div className="space-y-4">
+					{transcript.body.map((pair, index) => (
+						<div
+							key={pair.en.slice(0, 20)}
+							className="p-4 sm:p-6 rounded-lg bg-white dark:bg-gray-800 shadow-sm"
+						>
+							<p className="text-base leading-relaxed text-gray-900 dark:text-gray-100 mb-3">
+								{pair.en}
+							</p>
+							<p className="text-base leading-relaxed text-gray-700 dark:text-gray-300 mb-4">
+								{pair.ja}
+							</p>
+							{audioContents[index] && (
+								<div className="space-y-2">
+									<audio
+										id={`audio-${index}`}
+										controls
+										className="w-full h-8"
+										src={audioContents[index]}
+									>
+										<track kind="captions" />
+									</audio>
+									<div className="flex gap-1">
+										<button
+											type="button"
+											onClick={() => {
+												const audio = document.getElementById(
+													`audio-${index}`,
+												) as HTMLAudioElement;
+												if (audio) {
+													audio.currentTime = Math.max(
+														0,
+														audio.currentTime - 2,
+													);
+												}
+											}}
+											className="flex-1 py-1.5 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-all"
+										>
+											2秒戻る
+										</button>
+										<button
+											type="button"
+											onClick={() => {
+												const audio = document.getElementById(
+													`audio-${index}`,
+												) as HTMLAudioElement;
+												if (audio) {
+													audio.currentTime = Math.min(
+														audio.duration,
+														audio.currentTime + 2,
+													);
+												}
+											}}
+											className="flex-1 py-1.5 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-all"
+										>
+											2秒進む
+										</button>
+									</div>
 								</div>
-							))}
+							)}
 						</div>
-					</div>
+					))}
 				</div>
 			</main>
 		</div>
