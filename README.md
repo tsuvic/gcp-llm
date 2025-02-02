@@ -86,6 +86,12 @@ Unable to submit request because the input token count is 48261 but model only s
 
 long output token length is not enabled for this request
 
+なるべく 1 つのモデルで完結することから挑戦する。
+
+タスクが多かったり、細かい条件を指定したり、複雑な指示になると、精度が落ちる。
+
+そのため decomposion を考える。
+
 ```
 
 {
