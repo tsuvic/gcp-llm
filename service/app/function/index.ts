@@ -1,141 +1,184 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { TextToSpeechClient } from "@google-cloud/text-to-speech";
+import {
+	HarmBlockThreshold,
+	HarmCategory,
+	VertexAI,
+} from "@google-cloud/vertexai";
+import type { Contents } from "~/types";
+import { uploadAudio, uploadText } from "./storage";
 
-function createWebpageLanguageDetectionRequest(fileUri: FormDataEntryValue) {
-	const textPart = {
-		text: `Analyze the following webpage content and determine if it's primarily in Japanese or English. 
-        Just respond with either "ja" or "en". Do not include any other text in your response.`,
-	};
-	const filePart = {
-		fileData: {
-			mimeType: "text/html",
-			fileUri: fileUri.toString(),
-		},
-	};
-	return {
-		contents: [
-			{
-				role: "user",
-				parts: [textPart, filePart],
-			},
-		],
-	};
-}
+const MAX_INPUT_TOKENS = 3000;
+const MAX_OUTPUT_TOKENS = 300;
 
-function createVideoLanguageDetectionRequest(fileUri: FormDataEntryValue) {
-	const textPart = {
-		text: `Analyze the following video transcription and determine if the speech is primarily in Japanese or English. 
-        Just respond with either "ja" or "en". Do not include any other text in your response.`,
-	};
-	const filePart = {
-		fileData: {
-			mimeType: "video/*",
-			fileUri: fileUri.toString(),
-		},
-	};
-	return {
-		contents: [
-			{
-				role: "user",
-				parts: [textPart, filePart],
-			},
-		],
-	};
-}
-
-function createWebpageTranscriptionRequest(fileUri: FormDataEntryValue) {
-	const textPart = {
-		text: `Extract the main content from this webpage, excluding any HTML tags (e.g., links, code snippets, etc.). Only output the text content, without any HTML or code elements. If the input is in English, output the text in English, and if the input is in Japanese, output the text in Japanese.`,
-	};
-	const filePart = {
-		fileData: {
-			mimeType: "text/html",
-			fileUri: fileUri.toString(),
-		},
-	};
-	return {
-		contents: [
-			{
-				role: "user",
-				parts: [textPart, filePart],
-			},
-		],
-	};
-}
-
-function createVideoTranscriptionRequest(fileUri: FormDataEntryValue) {
-	const textPart = {
-		text: `Transcribe the speech from this video and include timestamps for each sentence. Just output the extracted text without any additional response. If the input is English, output the text in English. If the input is Japanese, output the text in Japanese.`,
-	};
-	const filePart = {
-		fileData: {
-			mimeType: "video/*",
-			fileUri: fileUri.toString(),
-		},
-	};
-	return {
-		contents: [
-			{
-				role: "user",
-				parts: [textPart, filePart],
-			},
-		],
-	};
-}
-
-function createWebpageTranscriptionWithLangRequest(
-	fileUri: FormDataEntryValue,
-	language: string,
+// Vertex AIでのコンテンツ処理
+export async function processWebContent(
+	url: string,
+	contentId: string,
+	userId: number,
 ) {
-	const textPart = {
-		text:
-			language === "ja"
-				? `このWebページの本文を抽出してください。タイトル、ヘッダー、フッターなどの本文と関係ない部分は除外してください。抽出したテキストのみ出力してください。`
-				: `Extract the main text from this webpage. Exclude the title, header, footer, and any other content not related to the main body of the text. Just output the extracted text without any additional response.`,
+	if (!process.env.GCP_PROJECT_ID) {
+		throw new Error("GCP_PROJECT_ID is not set");
+	}
+
+	// テキスト処理
+	const startTime = performance.now();
+	const model = initializeAIModel();
+	const req = createWebPageTranscriptionAndTranslationRequest(url);
+	const count = await model.countTokens(req);
+
+	if (count.totalTokens > MAX_INPUT_TOKENS) {
+		throw new Error(
+			`トークン数が制限を超えています（${count.totalTokens} > ${MAX_INPUT_TOKENS.toLocaleString()}）`,
+		);
+	}
+
+	const result = await model.generateContent(req);
+	const res = await result.response;
+	const content = res.candidates?.[0]?.content;
+	const rawText = content?.parts?.[0]?.text || "";
+	console.log(res);
+	console.log(content);
+
+	let contents: Contents;
+	if (res.candidates?.[0]?.finishReason === "MAX_TOKENS") {
+		try {
+			// 最後のペアを探す
+			// [{"en": "aaaaaa", "ja": "あああ"}, {"en": "aaaaa", "ja": "あああ"}]
+			const index = rawText.lastIndexOf(", {");
+			if (index === -1) {
+				throw new Error("有効なペアが見つかりませんでした");
+			}
+			const json = `${rawText.slice(0, index)} ]}`;
+			contents = JSON.parse(json);
+		} catch (error) {
+			console.error("JSON解析エラー:", error);
+			throw new Error("翻訳結果の解析に失敗しました");
+		}
+	} else {
+		contents = JSON.parse(rawText);
+	}
+	console.log(contents);
+
+	const endTime = performance.now();
+	const processingTime = endTime - startTime;
+
+	const outputData = {
+		timestamp: new Date().toISOString(),
+		inputUrl: url,
+		isYouTube: false,
+		processingTime,
+		result: JSON.stringify(contents),
+		contentId,
+		finishReason: res.candidates?.[0]?.finishReason || "UNKNOWN",
+		counTotalTokens: count.totalTokens,
+		totalTokens: res.usageMetadata?.totalTokenCount || 0,
 	};
-	const filePart = {
-		fileData: {
-			mimeType: "text/html",
-			fileUri: fileUri.toString(),
-		},
-	};
-	return {
-		contents: [
-			{
-				role: "user",
-				parts: [textPart, filePart],
+	await uploadText(JSON.stringify(outputData, null, 2), contentId, userId);
+
+	// 音声処理
+	const client = new TextToSpeechClient();
+	for (let i = 0; i < contents.body.length; i++) {
+		const [response] = await client.synthesizeSpeech({
+			input: { text: contents.body[i].en },
+			voice: { languageCode: "en-US", name: "en-US-Neural2-I" },
+			audioConfig: {
+				audioEncoding: "MP3",
+				sampleRateHertz: 24000,
+				effectsProfileId: ["handset-class-device"],
+				pitch: 0,
+				speakingRate: 1.0,
 			},
-		],
+		});
+
+		if (response.audioContent && response.audioContent instanceof Uint8Array) {
+			await uploadAudio(
+				Buffer.from(response.audioContent),
+				contentId,
+				i + 1,
+				userId,
+			);
+		}
+	}
+
+	return {
+		contents: contents,
+		processingTime,
+		finishReason: res.candidates?.[0]?.finishReason || "UNKNOWN",
+		countTotalTokens: count.totalTokens,
+		totalTokens: res.usageMetadata?.totalTokenCount || 0,
 	};
 }
 
-function createVideoTranscriptionWithLangRequest(
-	fileUri: FormDataEntryValue,
-	language: string,
-) {
-	const textPart = {
-		text:
-			language === "ja"
-				? `この動画の音声を文字起こししてください。各文章にタイムスタンプを含めてください。文字起こし結果のみ出力してください。`
-				: `Please transcribe the speech from this video and include timestamps for each sentence. Just output the transcription without any additional response.`,
-	};
-	const filePart = {
-		fileData: {
-			mimeType: "video/*",
-			fileUri: fileUri.toString(),
-		},
-	};
+// エラーハンドリング
+export function handleError(error: unknown) {
+	console.error("エラー:", error);
+
+	if (error instanceof Error) {
+		if (error.message.includes("URL_ROBOTED-ROBOTED_DENIED")) {
+			return {
+				status: "error",
+				message: "アクセス制限エラー",
+				error: "このウェブサイトはAIによる自動アクセスを許可していません。",
+			};
+		}
+
+		return {
+			status: "error",
+			message: "処理中にエラーが発生しました",
+			error: error.message,
+		};
+	}
+
 	return {
-		contents: [
-			{
-				role: "user",
-				parts: [textPart, filePart],
-			},
-		],
+		status: "error",
+		message: "不明なエラーが発生しました",
+		error: "詳細不明",
 	};
 }
 
-export function createWebPageTranscriptionAndTranslationRequest(
+// AIモデルの初期化
+function initializeAIModel() {
+	const vertexAI = new VertexAI({
+		project: process.env.GCP_PROJECT_ID,
+		location: "asia-northeast1",
+	});
+
+	return vertexAI.preview.getGenerativeModel(
+		{
+			model: "gemini-1.5-flash",
+			safetySettings: [
+				{
+					category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+					threshold: HarmBlockThreshold.BLOCK_NONE,
+				},
+				{
+					category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+					threshold: HarmBlockThreshold.BLOCK_NONE,
+				},
+				{
+					category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+					threshold: HarmBlockThreshold.BLOCK_NONE,
+				},
+				{
+					category: HarmCategory.HARM_CATEGORY_UNSPECIFIED,
+					threshold: HarmBlockThreshold.BLOCK_NONE,
+				},
+				{
+					category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+					threshold: HarmBlockThreshold.BLOCK_NONE,
+				},
+			],
+			generationConfig: {
+				maxOutputTokens: MAX_OUTPUT_TOKENS,
+				temperature: 0.5,
+				topP: 0.95,
+			},
+		},
+		{ timeout: 300000 },
+	);
+}
+
+function createWebPageTranscriptionAndTranslationRequest(
 	fileUri: FormDataEntryValue,
 ) {
 	const textPart = {
@@ -147,7 +190,7 @@ If you include anything extra, it will be absolutely unacceptable.
 
 1. Extract only the main article content, exactly as it is, without HTML or metadata.  
 2. Translate each sentence separately: English to Japanese, Japanese to English.  
-3. Output the result in this format: [{"en": "xxxxxx", "ja": "xxxxx"}, {"en": "xxxxxx", "ja": "xxxxx"}]  
+3. Output the result in this format: {"title": "xxxx", {"body": [{"en": "xxxxxx", "ja": "xxxxx"}, {"en": "xxxxxx", "ja": "xxxxx"}]}
 4. Absolutely no extra text, code blocks, or formatting characters.  
 
 `,
@@ -166,94 +209,4 @@ If you include anything extra, it will be absolutely unacceptable.
 			},
 		],
 	};
-}
-
-function createTranslationRequest(outputData: {
-	timestamp: string;
-	inputUrl: string;
-	isYouTube: boolean;
-	processingTime: number;
-	result: string;
-}) {
-	const textPart = {
-		text: `Translate the following text to English if it's in Japanese, or to Japanese if it's in English. Output each sentence pair (one English sentence followed by its Japanese translation) on separate lines with a single newline between each pair.
-
-Text to translate:
-    ${outputData.result}`,
-	};
-	return {
-		contents: [
-			{
-				role: "user",
-				parts: [textPart],
-			},
-		],
-	};
-}
-
-// 共通のファイル保存関数
-export async function saveFile(options: {
-	content: string | Uint8Array;
-	directory: string;
-	eventId: string;
-	suffix?: number;
-	extension: string;
-	encoding?: BufferEncoding | "binary";
-}) {
-	const {
-		content,
-		directory,
-		eventId,
-		suffix,
-		extension,
-		encoding = "utf-8",
-	} = options;
-	const outputPath = join(process.cwd(), "output", directory);
-	const fileName =
-		suffix !== undefined
-			? `${eventId}-${suffix}.${extension}`
-			: `${eventId}.${extension}`;
-
-	try {
-		await mkdir(outputPath, { recursive: true });
-		await writeFile(join(outputPath, fileName), content, encoding);
-		console.log(`ファイルを保存しました: ${fileName}`);
-		return fileName;
-	} catch (error) {
-		console.error(`ファイル保存エラー (${directory}):`, error);
-		return "";
-	}
-}
-
-// Vertex AI用の保存関数
-export async function saveOutputFile(outputData: {
-	timestamp: string;
-	inputUrl: string;
-	isYouTube: boolean;
-	processingTime: number;
-	result: string;
-	eventId: string;
-}) {
-	return saveFile({
-		content: JSON.stringify(outputData, null, 2),
-		directory: "text",
-		eventId: outputData.eventId,
-		extension: "json",
-	});
-}
-
-// Text-to-Speech用の保存関数
-export async function saveSpeechFile(
-	audioContent: Uint8Array,
-	eventId: string,
-	index: number,
-) {
-	return saveFile({
-		content: audioContent,
-		directory: "audio",
-		eventId: eventId,
-		suffix: index,
-		extension: "mp3",
-		encoding: "binary",
-	});
 }

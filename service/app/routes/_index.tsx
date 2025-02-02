@@ -1,11 +1,7 @@
 import type { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Form, useActionData, useNavigation } from "@remix-run/react";
 import { useState } from "react";
-import {
-	getAudioContents,
-	handleError,
-	processWebContent,
-} from "../function/process";
+import { handleError, processWebContent } from "../function";
 
 export const meta: MetaFunction = () => {
 	return [
@@ -21,9 +17,11 @@ export async function action({ request }: ActionFunctionArgs) {
 	try {
 		const formData = await request.formData();
 		const url = formData.get("fileUri");
-		const eventId = `${Date.now()}`;
+		const contentId = `${Date.now()}`;
+		const userId = 100;
 
 		if (!url) {
+			console.error("URLが指定されていません");
 			return {
 				status: "error",
 				message: "エラー",
@@ -31,16 +29,28 @@ export async function action({ request }: ActionFunctionArgs) {
 			};
 		}
 
-		const result = await processWebContent(url.toString(), eventId);
-		const audioContents = await getAudioContents(
-			eventId,
-			result.translationPairs.length,
-		);
+		console.log("処理開始:", {
+			url: url.toString(),
+			contentId,
+			timestamp: new Date().toISOString(),
+		});
+
+		const result = await processWebContent(url.toString(), contentId, userId);
+		const audioContents: string[] = [];
+
+		console.log("処理完了:", {
+			url: url.toString(),
+			contentId,
+			processingTime: `${result.processingTime.toFixed(2)}ミリ秒`,
+			finishReason: result.finishReason,
+			totalTokens: result.totalTokens,
+			timestamp: new Date().toISOString(),
+		});
 
 		return {
 			status: "success",
 			message: "リクエストが正常に処理されました",
-			response: result.translationPairs,
+			contents: result.contents,
 			processingTime: `${result.processingTime.toFixed(2)}ミリ秒`,
 			finishReason: result.finishReason,
 			countTotalTokens: result.countTotalTokens,
@@ -143,8 +153,9 @@ export default function Index() {
 								{actionData.status === "success" ? (
 									<div className="flex-1 flex flex-col overflow-hidden">
 										<div className="flex-1 overflow-y-auto">
-											{actionData.response && actionData.response.length > 0 ? (
-												actionData.response.map((pair, index) => (
+											{actionData.contents &&
+											actionData.contents.body.length > 0 ? (
+												actionData.contents.body.map((pair, index) => (
 													<div
 														key={pair.en.slice(0, 20)}
 														className="mb-6 last:mb-0 p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50"
@@ -185,6 +196,7 @@ export default function Index() {
 																			strokeLinecap="round"
 																			strokeLinejoin="round"
 																		>
+																			<title>2秒戻る</title>
 																			<path d="m12 8-4 4 4 4" />
 																		</svg>
 																	</button>
@@ -215,6 +227,7 @@ export default function Index() {
 																			strokeLinecap="round"
 																			strokeLinejoin="round"
 																		>
+																			<title>2秒進む</title>
 																			<path d="m12 16 4-4-4-4" />
 																		</svg>
 																	</button>
@@ -257,9 +270,6 @@ export default function Index() {
 											</p>
 											<p className="ml-4">
 												処理時間: {actionData.processingTime}
-											</p>
-											<p className="ml-4">
-												保存ファイル: {actionData.savedFile}
 											</p>
 										</div>
 									</div>
