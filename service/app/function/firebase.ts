@@ -42,7 +42,11 @@ export const getContents = async (userId: string) => {
 		const userDocRef = db.collection("users").doc(userId);
 		const contentsSnapshot = await userDocRef.collection("contents").get();
 		const contents: ContentGetCollection[] = contentsSnapshot.docs.map(
-			(doc) => doc.data() as ContentGetCollection,
+			(doc) =>
+				({
+					contentId: doc.id,
+					...doc.data(),
+				}) as ContentGetCollection,
 		);
 
 		return contents;
