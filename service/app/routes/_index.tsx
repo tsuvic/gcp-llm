@@ -55,20 +55,20 @@ export default function Index() {
 
 			<main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
 				{/* PC表示用フィルター */}
-				<div className="hidden md:flex items-start mb-6 gap-4">
-					<Link
-						to="/save"
-						className="w-28 px-3 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-center flex items-center justify-center text-xs font-medium rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
-					>
-						Create Article
-					</Link>
-					<div className="flex-1 grid grid-cols-12 gap-4">
+				<div className="hidden md:flex items-start mb-6">
+					<div className="w-full grid grid-cols-12 gap-4">
+						<Link
+							to="/save"
+							className="col-span-2 px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-center flex items-center justify-center text-xs font-medium rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
+						>
+							Create Article
+						</Link>
 						<input
 							type="text"
 							placeholder="Search by title..."
 							value={titleFilter}
 							onChange={(e) => setTitleFilter(e.target.value)}
-							className="col-span-3 px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 
+							className="col-span-2 px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 
 									bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
 						/>
 						<input
@@ -76,7 +76,7 @@ export default function Index() {
 							placeholder="Search by URL..."
 							value={urlFilter}
 							onChange={(e) => setUrlFilter(e.target.value)}
-							className="col-span-3 px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 
+							className="col-span-2 px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 
 									bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
 						/>
 						<div className="col-span-6 flex gap-2">
@@ -190,9 +190,9 @@ export default function Index() {
 						<Link
 							key={content.url}
 							to={`/contents/${content.contentId}`}
-							className="block h-16 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all border border-gray-100 dark:border-gray-700 hover:border-blue-100 dark:hover:border-blue-900 relative overflow-hidden"
+							className="block h-16 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all border border-gray-100 dark:border-gray-700 hover:border-blue-100 dark:hover:border-blue-900 relative overflow-hidden group"
 						>
-							<div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-transparent hover:from-blue-50 dark:hover:from-blue-900/20 transition-all" />
+							<div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-transparent group-hover:from-blue-50 dark:group-hover:from-blue-900/20 transition-all" />
 							<div className="flex h-full p-4 items-center relative">
 								{/* PC表示用レイアウト */}
 								<div className="hidden md:block flex-1 min-w-0">
