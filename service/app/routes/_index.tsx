@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Header } from "../components/Header";
 import { getContents } from "../function/firebase";
 import type { ContentGetCollection } from "../types";
+import { toJSTString } from "../utils/date";
 
 export const meta: MetaFunction = () => {
 	return [{ title: "ARTICLEPLAY - コンテンツ一覧" }];
@@ -15,9 +16,7 @@ export const loader: LoaderFunction = async () => {
 	const contents = await getContents(userId);
 	return {
 		contents: contents,
-		dates: contents.map((content) =>
-			content.createdAt.toDate().toLocaleString(),
-		),
+		dates: contents.map((content) => toJSTString(content.createdAt.toDate())),
 	};
 };
 

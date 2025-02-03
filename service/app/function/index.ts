@@ -4,6 +4,7 @@ import {
 	HarmCategory,
 	VertexAI,
 } from "@google-cloud/vertexai";
+import { ulid } from "ulid";
 import type { Contents } from "../types";
 import { logger } from "../utils/logger";
 import { uploadAudio, uploadText } from "./storage";
@@ -16,15 +17,12 @@ const MAX_OUTPUT_TOKENS = process.env.MAX_OUTPUT_TOKENS
 	: 100;
 
 // Vertex AIでのコンテン0ツ処理
-export async function processWebContent(
-	url: string,
-	contentId: string,
-	userId: string,
-) {
+export async function createContent(url: string, userId: string) {
 	if (!process.env.GCP_PROJECT_ID) {
 		throw new Error("GCP_PROJECT_ID is not set");
 	}
 
+	const contentId = ulid();
 	logger.info({
 		message: "処理開始",
 		userId,
@@ -142,6 +140,7 @@ export async function processWebContent(
 		});
 
 		return {
+			contentId,
 			contents: contents,
 			audioContents,
 			processingTime,

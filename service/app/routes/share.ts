@@ -1,12 +1,11 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
-import { processWebContent } from "../function";
+import { createContent } from "../function";
 import { logger } from "../utils/logger";
 
 export async function action({ request }: ActionFunctionArgs) {
 	try {
 		const formData = await request.formData();
 		const url = formData.get("fileUri");
-		const contentId = `${Date.now()}`;
 		const userId = "100";
 
 		if (!url) {
@@ -19,9 +18,9 @@ export async function action({ request }: ActionFunctionArgs) {
 			});
 		}
 
-		await processWebContent(url.toString(), contentId, userId);
+		const result = await createContent(url.toString(), userId);
 
-		return new Response(JSON.stringify({ contentId }), {
+		return new Response(JSON.stringify({ contentId: result.contentId }), {
 			status: 200,
 			headers: {
 				"Content-Type": "application/json",

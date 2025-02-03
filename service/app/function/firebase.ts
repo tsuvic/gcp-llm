@@ -1,5 +1,6 @@
 import { Firestore, Timestamp } from "@google-cloud/firestore";
 import type { ContentGetCollection, ContentSetCollection } from "../types";
+import { toJSTDate } from "../utils/date";
 import { logger } from "../utils/logger";
 
 const db = new Firestore({
@@ -16,21 +17,22 @@ export const saveContent = async (
 		const userDocRef = db.collection("users").doc(userId);
 		const contentDocRef = userDocRef.collection("contents").doc(contentId);
 
+		const now = toJSTDate(new Date());
 		const contentData: ContentSetCollection = {
 			url: data.url,
 			audioCount: data.audioCount,
 			title: data.title,
-			createdAt: Timestamp.now(),
-			updatedAt: Timestamp.now(),
+			createdAt: Timestamp.fromDate(now),
+			updatedAt: Timestamp.fromDate(now),
 			status: "completed",
 		};
 
 		await contentDocRef.set(contentData);
+		return contentId;
 	} catch (error) {
 		logger.error({
 			message: "Failed to save content to Firestore",
 			userId,
-			contentId,
 			error: error instanceof Error ? error.message : "Unknown error",
 		});
 		throw error;

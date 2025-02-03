@@ -2,9 +2,10 @@ import { Timestamp } from "@google-cloud/firestore";
 import type { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Form, useActionData, useNavigation } from "@remix-run/react";
 import { Header } from "../components/Header";
-import { handleError, processWebContent } from "../function";
+import { createContent, handleError } from "../function";
 import { saveContent } from "../function/firebase";
 import type { ContentSetCollection } from "../types";
+import { toJSTDate } from "../utils/date";
 import { logger } from "../utils/logger";
 
 export const meta: MetaFunction = () => {
@@ -21,14 +22,12 @@ export async function action({ request }: ActionFunctionArgs) {
 	try {
 		const formData = await request.formData();
 		const url = formData.get("url");
-		const contentId = `${Date.now()}`;
 		const userId = "100";
 
 		if (!url) {
 			logger.error({
 				message: "URLが指定されていません",
 				url,
-				contentId,
 				timestamp: new Date().toISOString(),
 			});
 			return {
@@ -38,22 +37,24 @@ export async function action({ request }: ActionFunctionArgs) {
 			};
 		}
 
-		const result = await processWebContent(url.toString(), contentId, userId);
+		const result = await createContent(url.toString(), userId);
 
+		const now = toJSTDate(new Date());
 		const content: ContentSetCollection = {
 			url: url.toString(),
 			audioCount: result.contents.body.length,
 			title: result.contents.title,
-			createdAt: Timestamp.now(),
-			updatedAt: Timestamp.now(),
+			createdAt: Timestamp.fromDate(now),
+			updatedAt: Timestamp.fromDate(now),
 			status: "completed",
 		};
-		await saveContent(content, userId, contentId);
+		await saveContent(content, userId, result.contentId);
 
 		return {
 			status: "success",
 			message: "リクエストが正常に処理されました",
 			contents: result.contents,
+			contentId: result.contentId,
 			processingTime: `${result.processingTime.toFixed(2)}ミリ秒`,
 			finishReason: result.finishReason,
 			countTotalTokens: result.countTotalTokens,

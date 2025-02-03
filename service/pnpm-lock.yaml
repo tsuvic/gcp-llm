@@ -38,6 +38,9 @@ importers:
       react-dom:
         specifier: ^18.2.0
         version: 18.3.1(react@18.3.1)
+      ulid:
+        specifier: ^2.3.0
+        version: 2.3.0
       winston:
         specifier: ^3.17.0
         version: 3.17.0
@@ -3575,6 +3578,10 @@ packages:
 
   ufo@1.5.4:
     resolution: {integrity: sha512-UsUk3byDzKd04EyoZ7U4DOlxQaD14JUKQl6/P7wiX4FNvUfm3XL246n9W5AmqwW5RSFJ27NAuM0iLscAOYUiGQ==}
+
+  ulid@2.3.0:
+    resolution: {integrity: sha512-keqHubrlpvT6G2wH0OEfSW4mquYRcbe/J8NMmveoQOjUqmo+hXtO+ORCpWhdbZ7k72UtY61BL7haGxW6enBnjw==}
+    hasBin: true
 
   unbox-primitive@1.1.0:
     resolution: {integrity: sha512-nWJ91DjeOkej/TA8pXQ3myruKpKEYgqvpw9lz4OPHj/NWFNluYrjbz9j01CJ8yKQd2g4jFoOkINCTW2I5LEEyw==}
@@ -8017,6 +8024,8 @@ snapshots:
   typescript@5.7.3: {}
 
   ufo@1.5.4: {}
+
+  ulid@2.3.0: {}
 
   unbox-primitive@1.1.0:
     dependencies:
