@@ -18,19 +18,19 @@ gcloud artifacts repositories list
 gcloud auth configure-docker asia-northeast1-docker.pkg.dev
 # HOST-NAME/PROJECT-ID/REPOSITORY/IMAGE
 docker build --platform linux/amd64 -t asia-northeast1-docker.pkg.dev/XXXX/gcp-llm/gcp-llm:latest .
-docker image latest
 docker push asia-northeast1-docker.pkg.dev/XXXX/gcp-llm/gcp-llm:latest
 
-gcloud run deploy gcp-llm --image asia-northeast1-docker.pkg.dev/XXXX/gcp-llm/gcp-llm:latest -
--platform managed --region asia-northeast1 --allow-unauthenticated
+gcloud run deploy gcp-llm --image asia-northeast1-docker.pkg.dev/XXXX/gcp-llm/gcp-llm:latest --platform managed --region asia-northeast1 --allow-unauthenticated --service-account XXXXX --set-env-vars GCP_PROJECT_ID=XXXX,GCP_STORAGE_BUCKET=XXXX,MAX_INPUT_TOKENS=XXXX,MAX_OUTPUT_TOKENS=XXXX
 gcloud run services list
-
 
 # delete
 gcloud run services delete gcp-llm --region asia-northeast1
 
 # アプリケーション用の認証
 gcloud auth application-default login
+
+gcloud iam service-accounts list --filter="compute"
+
 
 ```
 
@@ -91,6 +91,10 @@ long output token length is not enabled for this request
 タスクが多かったり、細かい条件を指定したり、複雑な指示になると、精度が落ちる。
 
 そのため decomposion を考える。
+
+[text](https://discuss.ai.google.dev/t/output-tokens-limit-for-the-finetuned-gemini-flash-1-5/37715)
+
+[text](https://cloud.google.com/vertex-ai/generative-ai/docs/multimodal/design-multimodal-prompts?authuser=2&_gl=1*1og5ey*_ga*Mzc5ODgxNDgzLjE3MzgxMTk1OTc.*_ga_WH2QY8WWF5*MTczODM0MTIwOS44LjEuMTczODM0MTc5Mi4wLjAuMA..&hl=ja)
 
 ```
 
@@ -205,3 +209,9 @@ curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "fileUri=ht
 ## firestore
 
 [text](https://github.com/googleapis/nodejs-firestore)
+
+## iam
+
+[text](https://zenn.dev/google_cloud_jp/articles/cloudrun-serviceaccount)
+
+[text](https://zenn.dev/google_cloud_jp/articles/5104d1d1f28560)
