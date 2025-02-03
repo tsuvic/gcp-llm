@@ -1,6 +1,7 @@
 import { Timestamp } from "@google-cloud/firestore";
 import type { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Form, useActionData, useNavigation } from "@remix-run/react";
+import { useEffect, useState } from "react";
 import { Header } from "../components/Header";
 import { createContent, handleError } from "../function";
 import { saveContent } from "../function/firebase";
@@ -72,6 +73,13 @@ export default function Index() {
 	const actionData = useActionData<typeof action>();
 	const navigation = useNavigation();
 	const isProcessing = navigation.state === "submitting";
+	const [isSuccess, setIsSuccess] = useState(false);
+
+	useEffect(() => {
+		if (actionData?.status === "success") {
+			setIsSuccess(true);
+		}
+	}, [actionData]);
 
 	return (
 		<div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
@@ -79,35 +87,53 @@ export default function Index() {
 
 			<main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
 				<div className="space-y-4">
-					<div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4">
-						<Form method="post" className="space-y-4">
-							<div>
-								<label
-									htmlFor="url"
-									className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-1"
-								>
-									URL
-								</label>
+					<div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+						<Form method="post" className="space-y-6">
+							<div className="relative">
 								<input
 									type="url"
 									name="url"
 									id="url"
 									required
-									className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 
-											bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+									disabled={isSuccess}
+									className="w-full px-4 py-3 text-base rounded-xl border-2 border-gray-200 dark:border-gray-700 
+											bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+											disabled:bg-gray-100 dark:disabled:bg-gray-700 disabled:cursor-not-allowed
+											focus:border-blue-500 dark:focus:border-blue-400 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-900
+											transition-all outline-none"
 									placeholder="https://example.com"
 								/>
+								{isSuccess && (
+									<div className="absolute right-3 top-1/2 -translate-y-1/2">
+										<svg
+											className="w-5 h-5 text-green-500"
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
+											<path
+												strokeLinecap="round"
+												strokeLinejoin="round"
+												strokeWidth={2}
+												d="M5 13l4 4L19 7"
+											/>
+										</svg>
+									</div>
+								)}
 							</div>
 
 							<div className="flex justify-end">
 								<button
 									type="submit"
-									disabled={isProcessing}
-									className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${
-										isProcessing
-											? "bg-gray-400 dark:bg-gray-600 text-gray-200 dark:text-gray-400 cursor-not-allowed"
-											: "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200"
-									}`}
+									disabled={isProcessing || isSuccess}
+									className={`px-6 py-3 text-sm font-medium rounded-xl transition-all flex items-center gap-2 
+										${
+											isSuccess
+												? "bg-green-600 text-white cursor-not-allowed"
+												: isProcessing
+													? "bg-gray-400 dark:bg-gray-600 text-gray-200 dark:text-gray-400 cursor-not-allowed"
+													: "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white shadow-sm hover:shadow-md"
+										}`}
 								>
 									{isProcessing ? (
 										<>
@@ -117,7 +143,6 @@ export default function Index() {
 												fill="none"
 												viewBox="0 0 24 24"
 											>
-												<title>Processing...</title>
 												<circle
 													className="opacity-25"
 													cx="12"
@@ -134,8 +159,40 @@ export default function Index() {
 											</svg>
 											Processing...
 										</>
+									) : isSuccess ? (
+										<>
+											<svg
+												className="w-4 h-4"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth={2}
+													d="M5 13l4 4L19 7"
+												/>
+											</svg>
+											Converted
+										</>
 									) : (
-										"Save"
+										<>
+											<svg
+												className="w-4 h-4"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													strokeLinecap="round"
+													strokeLinejoin="round"
+													strokeWidth={2}
+													d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+												/>
+											</svg>
+											Save
+										</>
 									)}
 								</button>
 							</div>
