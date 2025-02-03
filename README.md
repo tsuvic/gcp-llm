@@ -219,7 +219,9 @@ curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "fileUri=ht
 ## todo
 
 eventid ulid
+jst
 remix wpa
 cloudflare waf
 doc
 node env why where production?
+[log](https://zenn.dev/dinii/articles/c8ca221b3eda5b)
