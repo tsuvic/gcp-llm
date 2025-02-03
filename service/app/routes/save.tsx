@@ -121,6 +121,7 @@ export default function Index() {
 												fill="none"
 												viewBox="0 0 24 24"
 											>
+												<title>Processing</title>
 												<circle
 													className="opacity-25"
 													cx="12"
