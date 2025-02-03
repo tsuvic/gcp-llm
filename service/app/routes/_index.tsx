@@ -58,14 +58,14 @@ export default function Index() {
 				<div className="hidden md:flex items-start mb-6 gap-4">
 					<Link
 						to="/save"
-						className="w-28 h-8 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-center flex items-center justify-center text-xs font-medium rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
+						className="w-28 px-3 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-center flex items-center justify-center text-xs font-medium rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
 					>
-						Save new content
+						Create Article
 					</Link>
 					<div className="flex-1 grid grid-cols-12 gap-4">
 						<input
 							type="text"
-							placeholder="Filter with title"
+							placeholder="Search by title..."
 							value={titleFilter}
 							onChange={(e) => setTitleFilter(e.target.value)}
 							className="col-span-3 px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 
@@ -73,7 +73,7 @@ export default function Index() {
 						/>
 						<input
 							type="text"
-							placeholder="Filter with URL"
+							placeholder="Search by URL..."
 							value={urlFilter}
 							onChange={(e) => setUrlFilter(e.target.value)}
 							className="col-span-3 px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 
@@ -99,18 +99,18 @@ export default function Index() {
 				</div>
 
 				{/* スマホ表示用フィルター */}
-				<div className="md:hidden space-y-4 mb-6">
-					<Link
-						to="/save"
-						className="block w-full h-10 bg-gray-700 dark:bg-gray-200 text-white dark:text-gray-900 text-center flex items-center justify-center text-md font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-all"
-					>
-						Save new content
-					</Link>
-					<div className="flex gap-2">
+				<div className="md:hidden space-y-3 mb-6">
+					<div className="grid grid-cols-5 gap-2">
+						<Link
+							to="/save"
+							className="col-span-2 h-9 bg-gray-700 dark:bg-gray-200 text-white dark:text-gray-900 text-center flex items-center justify-center text-xs font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-300 transition-all"
+						>
+							Create
+						</Link>
 						<button
 							type="button"
 							onClick={() => toggleFilter("title")}
-							className={`flex-1 px-3 py-2 text-sm rounded-lg transition-colors ${
+							className={`h-9 text-xs rounded-lg transition-colors ${
 								activeFilter === "title"
 									? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
 									: "bg-gray-900 dark:bg-gray-800 text-white dark:text-gray-200"
@@ -121,7 +121,7 @@ export default function Index() {
 						<button
 							type="button"
 							onClick={() => toggleFilter("url")}
-							className={`flex-1 px-3 py-2 text-sm rounded-lg transition-colors ${
+							className={`h-9 text-xs rounded-lg transition-colors ${
 								activeFilter === "url"
 									? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
 									: "bg-gray-900 dark:bg-gray-800 text-white dark:text-gray-200"
@@ -132,33 +132,33 @@ export default function Index() {
 						<button
 							type="button"
 							onClick={() => toggleFilter("date")}
-							className={`flex-1 px-3 py-2 text-sm rounded-lg transition-colors ${
+							className={`h-9 text-xs rounded-lg transition-colors ${
 								activeFilter === "date"
 									? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
 									: "bg-gray-900 dark:bg-gray-800 text-white dark:text-gray-200"
 							}`}
 						>
-							Dates
+							Date
 						</button>
 					</div>
 
 					{activeFilter === "title" && (
 						<input
 							type="text"
-							placeholder="Filter with title"
+							placeholder="Search by title..."
 							value={titleFilter}
 							onChange={(e) => setTitleFilter(e.target.value)}
-							className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 
+							className="w-full h-9 px-3 text-sm rounded-lg border border-gray-300 dark:border-gray-600 
 									bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
 						/>
 					)}
 					{activeFilter === "url" && (
 						<input
 							type="text"
-							placeholder="Filter with URL"
+							placeholder="Search by URL..."
 							value={urlFilter}
 							onChange={(e) => setUrlFilter(e.target.value)}
-							className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 
+							className="w-full h-9 px-3 text-sm rounded-lg border border-gray-300 dark:border-gray-600 
 									bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
 						/>
 					)}
@@ -168,17 +168,17 @@ export default function Index() {
 								type="date"
 								value={startDate}
 								onChange={(e) => setStartDate(e.target.value)}
-								className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 
-										bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-xs"
-								placeholder="yyyy/mm/dd"
+								className="flex-1 h-9 px-3 text-sm rounded-lg border border-gray-300 dark:border-gray-600 
+										bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+								placeholder="Start date"
 							/>
 							<input
 								type="date"
 								value={endDate}
 								onChange={(e) => setEndDate(e.target.value)}
-								className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 
-										bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-xs"
-								placeholder="yyyy/mm/dd"
+								className="flex-1 h-9 px-3 text-sm rounded-lg border border-gray-300 dark:border-gray-600 
+										bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+								placeholder="End date"
 							/>
 						</div>
 					)}
