@@ -1,4 +1,5 @@
 import { Storage } from "@google-cloud/storage";
+import { logger } from "../utils/logger";
 
 const storage = new Storage();
 const bucketName = process.env.GCP_STORAGE_BUCKET;
@@ -24,10 +25,16 @@ export async function uploadToCloudStorage(
 		});
 
 		const gcsPath = `gs://${bucketName}/${path}`;
-		console.log(`ファイルを保存しました: ${gcsPath}`);
+
 		return gcsPath;
 	} catch (error) {
-		console.error("Cloud Storage upload error:", error);
+		logger.error({
+			message: "File upload failed",
+			path: `gs://${bucketName}/${path}`,
+			contentType,
+			error: error instanceof Error ? error.message : "Unknown error",
+		});
+
 		throw error;
 	}
 }

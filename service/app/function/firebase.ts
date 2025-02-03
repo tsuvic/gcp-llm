@@ -1,5 +1,6 @@
 import { Firestore, Timestamp } from "@google-cloud/firestore";
 import type { ContentGetCollection, ContentSetCollection } from "../types";
+import { logger } from "../utils/logger";
 
 const db = new Firestore({
 	projectId: process.env.GCP_PROJECT_ID,
@@ -11,36 +12,79 @@ export const saveContent = async (
 	userId: string,
 	contentId: string,
 ) => {
-	const userDocRef = db.collection("users").doc(userId);
-	const contentDocRef = userDocRef.collection("contents").doc(contentId);
+	try {
+		const userDocRef = db.collection("users").doc(userId);
+		const contentDocRef = userDocRef.collection("contents").doc(contentId);
 
-	const contentData: ContentSetCollection = {
-		url: data.url,
-		audioCount: data.audioCount,
-		title: data.title,
-		createdAt: Timestamp.now(),
-		updatedAt: Timestamp.now(),
-		status: "completed",
-	};
+		const contentData: ContentSetCollection = {
+			url: data.url,
+			audioCount: data.audioCount,
+			title: data.title,
+			createdAt: Timestamp.now(),
+			updatedAt: Timestamp.now(),
+			status: "completed",
+		};
 
-	await contentDocRef.set(contentData);
+		await contentDocRef.set(contentData);
+	} catch (error) {
+		logger.error({
+			message: "Failed to save content to Firestore",
+			userId,
+			contentId,
+			error: error instanceof Error ? error.message : "Unknown error",
+		});
+		throw error;
+	}
 };
 
 export const getContents = async (userId: string) => {
-	const userDocRef = db.collection("users").doc(userId);
-	const contentsSnapshot = await userDocRef.collection("contents").get();
-	const contents: ContentGetCollection[] = contentsSnapshot.docs.map(
-		(doc) => doc.data() as ContentGetCollection,
-	);
-	return contents;
+	try {
+		const userDocRef = db.collection("users").doc(userId);
+		const contentsSnapshot = await userDocRef.collection("contents").get();
+		const contents: ContentGetCollection[] = contentsSnapshot.docs.map(
+			(doc) => doc.data() as ContentGetCollection,
+		);
+
+		return contents;
+	} catch (error) {
+		logger.error({
+			message: "Failed to retrieve contents from Firestore",
+			userId,
+			error: error instanceof Error ? error.message : "Unknown error",
+		});
+		throw error;
+	}
 };
 
 export const getContent = async (userId: string, contentId: string) => {
-	const userDocRef = db.collection("users").doc(userId);
-	const contentDocRef = userDocRef.collection("contents").doc(contentId);
-	const contentSnapshot = await contentDocRef.get();
+	try {
+		const userDocRef = db.collection("users").doc(userId);
+		const contentDocRef = userDocRef.collection("contents").doc(contentId);
+		const contentSnapshot = await contentDocRef.get();
 
-	if (!contentSnapshot.exists) return null;
+		if (!contentSnapshot.exists) {
+			logger.warn({
+				message: "Content not found in Firestore",
+				userId,
+				contentId,
+			});
+			return null;
+		}
 
-	return contentSnapshot.data() as ContentGetCollection;
+		logger.info({
+			message: "Content retrieved from Firestore",
+			userId,
+			contentId,
+		});
+
+		return contentSnapshot.data() as ContentGetCollection;
+	} catch (error) {
+		logger.error({
+			message: "Failed to retrieve content from Firestore",
+			userId,
+			contentId,
+			error: error instanceof Error ? error.message : "Unknown error",
+		});
+		throw error;
+	}
 };

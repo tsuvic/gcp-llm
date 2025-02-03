@@ -34,7 +34,6 @@ export const loader: LoaderFunction = async ({ params }) => {
 	if (transcriptExists) {
 		const [transcriptContent] = await transcriptFile.download();
 		const transcriptData = JSON.parse(transcriptContent.toString());
-		console.log(transcriptData);
 		transcript = transcriptData.result
 			? JSON.parse(transcriptData.result)
 			: null;

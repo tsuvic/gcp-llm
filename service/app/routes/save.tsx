@@ -5,6 +5,7 @@ import { Header } from "../components/Header";
 import { handleError, processWebContent } from "../function";
 import { saveContent } from "../function/firebase";
 import type { ContentSetCollection } from "../types";
+import { logger } from "../utils/logger";
 
 export const meta: MetaFunction = () => {
 	return [
@@ -24,7 +25,12 @@ export async function action({ request }: ActionFunctionArgs) {
 		const userId = "100";
 
 		if (!url) {
-			console.error("URLが指定されていません");
+			logger.error({
+				message: "URLが指定されていません",
+				url,
+				contentId,
+				timestamp: new Date().toISOString(),
+			});
 			return {
 				status: "error",
 				message: "エラー",
@@ -32,22 +38,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			};
 		}
 
-		console.log("処理開始:", {
-			url: url.toString(),
-			contentId,
-			timestamp: new Date().toISOString(),
-		});
-
 		const result = await processWebContent(url.toString(), contentId, userId);
-
-		console.log("処理完了:", {
-			url: url.toString(),
-			contentId,
-			processingTime: `${result.processingTime.toFixed(2)}ミリ秒`,
-			finishReason: result.finishReason,
-			totalTokens: result.totalTokens,
-			timestamp: new Date().toISOString(),
-		});
 
 		const content: ContentSetCollection = {
 			url: url.toString(),
@@ -153,7 +144,9 @@ export default function Index() {
 					{/* 結果表示部分 */}
 					{actionData && (
 						<div className="space-y-3">
-							{actionData.contents && actionData.contents.body.length > 0 ? (
+							{actionData.status === "success" &&
+							actionData.contents &&
+							actionData.contents.body.length > 0 ? (
 								actionData.contents.body.map((pair, index) => (
 									<div
 										key={pair.en.slice(0, 20)}

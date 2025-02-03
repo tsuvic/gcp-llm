@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs } from "@remix-run/node";
 import { processWebContent } from "../function";
+import { logger } from "../utils/logger";
 
 export async function action({ request }: ActionFunctionArgs) {
 	try {
@@ -18,22 +19,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			});
 		}
 
-		console.log("処理開始:", {
-			url: url.toString(),
-			contentId,
-			timestamp: new Date().toISOString(),
-		});
-
-		const result = await processWebContent(url.toString(), contentId, userId);
-
-		console.log("処理完了:", {
-			url: url.toString(),
-			contentId,
-			processingTime: `${result.processingTime.toFixed(2)}ミリ秒`,
-			finishReason: result.finishReason,
-			totalTokens: result.totalTokens,
-			timestamp: new Date().toISOString(),
-		});
+		await processWebContent(url.toString(), contentId, userId);
 
 		return new Response(JSON.stringify({ contentId }), {
 			status: 200,
@@ -42,7 +28,11 @@ export async function action({ request }: ActionFunctionArgs) {
 			},
 		});
 	} catch (error) {
-		console.error("APIエラー:", error);
+		logger.error({
+			message: "APIエラー",
+			error,
+			timestamp: new Date().toISOString(),
+		});
 
 		const errorMessage =
 			error instanceof Error ? error.message : "不明なエラーが発生しました";

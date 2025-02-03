@@ -1,16 +1,22 @@
+import { Timestamp } from "@google-cloud/firestore";
 import { TextToSpeechClient } from "@google-cloud/text-to-speech";
 import {
 	HarmBlockThreshold,
 	HarmCategory,
 	VertexAI,
 } from "@google-cloud/vertexai";
-import type { Contents } from "~/types";
+import type { ContentSetCollection, Contents } from "~/types";
+import { logger } from "../utils/logger";
 import { uploadAudio, uploadText } from "./storage";
 
-const MAX_INPUT_TOKENS = 3000;
-const MAX_OUTPUT_TOKENS = 300;
+const MAX_INPUT_TOKENS = process.env.MAX_INPUT_TOKENS
+	? Number.parseInt(process.env.MAX_INPUT_TOKENS)
+	: 1000;
+const MAX_OUTPUT_TOKENS = process.env.MAX_OUTPUT_TOKENS
+	? Number.parseInt(process.env.MAX_OUTPUT_TOKENS)
+	: 100;
 
-// Vertex AIでのコンテンツ処理
+// Vertex AIでのコンテン0ツ処理
 export async function processWebContent(
 	url: string,
 	contentId: string,
@@ -20,97 +26,139 @@ export async function processWebContent(
 		throw new Error("GCP_PROJECT_ID is not set");
 	}
 
-	// テキスト処理
-	const startTime = performance.now();
-	const model = initializeAIModel();
-	const req = createWebPageTranscriptionAndTranslationRequest(url);
-	const count = await model.countTokens(req);
-
-	if (count.totalTokens > MAX_INPUT_TOKENS) {
-		throw new Error(
-			`トークン数が制限を超えています（${count.totalTokens} > ${MAX_INPUT_TOKENS.toLocaleString()}）`,
-		);
-	}
-
-	const result = await model.generateContent(req);
-	const res = await result.response;
-	const content = res.candidates?.[0]?.content;
-	const rawText = content?.parts?.[0]?.text || "";
-	console.log(res);
-	console.log(content);
-
-	let contents: Contents;
-	if (res.candidates?.[0]?.finishReason === "MAX_TOKENS") {
-		try {
-			// 最後のペアを探す
-			// [{"en": "aaaaaa", "ja": "あああ"}, {"en": "aaaaa", "ja": "あああ"}]
-			const index = rawText.lastIndexOf(", {");
-			if (index === -1) {
-				throw new Error("有効なペアが見つかりませんでした");
-			}
-			const json = `${rawText.slice(0, index)} ]}`;
-			contents = JSON.parse(json);
-		} catch (error) {
-			console.error("JSON解析エラー:", error);
-			throw new Error("翻訳結果の解析に失敗しました");
-		}
-	} else {
-		contents = JSON.parse(rawText);
-	}
-	console.log(contents);
-
-	const endTime = performance.now();
-	const processingTime = endTime - startTime;
-
-	const outputData = {
-		timestamp: new Date().toISOString(),
-		inputUrl: url,
-		isYouTube: false,
-		processingTime,
-		result: JSON.stringify(contents),
+	logger.info({
+		message: "処理開始",
+		userId,
 		contentId,
-		finishReason: res.candidates?.[0]?.finishReason || "UNKNOWN",
-		counTotalTokens: count.totalTokens,
-		totalTokens: res.usageMetadata?.totalTokenCount || 0,
-	};
-	await uploadText(JSON.stringify(outputData, null, 2), contentId, userId);
+		url: url.toString(),
+		timestamp: new Date().toISOString(),
+	});
 
-	// 音声処理
-	const client = new TextToSpeechClient();
-	const audioContents = [];
-	for (let i = 0; i < contents.body.length; i++) {
-		const [response] = await client.synthesizeSpeech({
-			input: { text: contents.body[i].en },
-			voice: { languageCode: "en-US", name: "en-US-Neural2-I" },
-			audioConfig: {
-				audioEncoding: "MP3",
-				sampleRateHertz: 24000,
-				effectsProfileId: ["handset-class-device"],
-				pitch: 0,
-				speakingRate: 1.0,
-			},
-		});
-		if (response.audioContent && response.audioContent instanceof Uint8Array) {
-			// ストレージにアップロード
-			await uploadAudio(
-				Buffer.from(response.audioContent),
-				contentId,
-				i + 1,
-				userId,
+	const startTime = performance.now();
+
+	try {
+		// テキスト処理
+		const model = initializeAIModel();
+		const req = createWebPageTranscriptionAndTranslationRequest(url);
+		const count = await model.countTokens(req);
+
+		if (count.totalTokens > MAX_INPUT_TOKENS) {
+			throw new Error(
+				`トークン数が制限を超えています（${count.totalTokens} > ${MAX_INPUT_TOKENS.toLocaleString()}）`,
 			);
-			// Base64エンコードしてクライアントに返す
-			audioContents.push(Buffer.from(response.audioContent).toString("base64"));
 		}
-	}
 
-	return {
-		contents: contents,
-		audioContents,
-		processingTime,
-		finishReason: res.candidates?.[0]?.finishReason || "UNKNOWN",
-		countTotalTokens: count.totalTokens,
-		totalTokens: res.usageMetadata?.totalTokenCount || 0,
-	};
+		const result = await model.generateContent(req);
+		const res = await result.response;
+		const content = res.candidates?.[0]?.content;
+		const rawText = content?.parts?.[0]?.text || "";
+		logger.info({
+			message: "処理結果",
+			contentId,
+			userId,
+			content,
+			res,
+		});
+
+		let contents: Contents;
+		if (res.candidates?.[0]?.finishReason === "MAX_TOKENS") {
+			try {
+				// 最後のペアを探す
+				// [{"en": "aaaaaa", "ja": "あああ"}, {"en": "aaaaa", "ja": "あああ"}]
+				const index = rawText.lastIndexOf(", {");
+				if (index === -1) {
+					throw new Error("有効なペアが見つかりませんでした");
+				}
+				const json = `${rawText.slice(0, index)} ]}`;
+				contents = JSON.parse(json);
+			} catch (error) {
+				logger.error({
+					message: "JSON解析エラー",
+					error,
+				});
+				throw new Error("翻訳結果の解析に失敗しました");
+			}
+		} else {
+			contents = JSON.parse(rawText);
+		}
+
+		const endTime = performance.now();
+		const processingTime = endTime - startTime;
+
+		const outputData = {
+			timestamp: new Date().toISOString(),
+			inputUrl: url,
+			isYouTube: false,
+			processingTime,
+			result: JSON.stringify(contents),
+			contentId,
+			finishReason: res.candidates?.[0]?.finishReason || "UNKNOWN",
+			counTotalTokens: count.totalTokens,
+			totalTokens: res.usageMetadata?.totalTokenCount || 0,
+		};
+		await uploadText(JSON.stringify(outputData, null, 2), contentId, userId);
+
+		// 音声処理
+		const client = new TextToSpeechClient();
+		const audioContents = [];
+		for (let i = 0; i < contents.body.length; i++) {
+			const [response] = await client.synthesizeSpeech({
+				input: { text: contents.body[i].en },
+				voice: { languageCode: "en-US", name: "en-US-Neural2-I" },
+				audioConfig: {
+					audioEncoding: "MP3",
+					sampleRateHertz: 24000,
+					effectsProfileId: ["handset-class-device"],
+					pitch: 0,
+					speakingRate: 1.0,
+				},
+			});
+			if (
+				response.audioContent &&
+				response.audioContent instanceof Uint8Array
+			) {
+				// ストレージにアップロード
+				await uploadAudio(
+					Buffer.from(response.audioContent),
+					contentId,
+					i + 1,
+					userId,
+				);
+				// Base64エンコードしてクライアントに返す
+				audioContents.push(
+					Buffer.from(response.audioContent).toString("base64"),
+				);
+			}
+		}
+
+		logger.info({
+			message: "処理完了",
+			userId,
+			contentId,
+			url: url.toString(),
+			processingTime: `${processingTime.toFixed(2)}ミリ秒`,
+			finishReason: res.candidates?.[0]?.finishReason || "UNKNOWN",
+			totalTokens: res.usageMetadata?.totalTokenCount || 0,
+			timestamp: new Date().toISOString(),
+		});
+
+		return {
+			contents: contents,
+			audioContents,
+			processingTime,
+			finishReason: res.candidates?.[0]?.finishReason || "UNKNOWN",
+			countTotalTokens: count.totalTokens,
+			totalTokens: res.usageMetadata?.totalTokenCount || 0,
+		};
+	} catch (error) {
+		logger.error({
+			message: "Content processing failed",
+			contentId,
+			userId,
+			error: error instanceof Error ? error.message : "Unknown error",
+		});
+		throw error;
+	}
 }
 
 // エラーハンドリング
