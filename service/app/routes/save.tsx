@@ -141,12 +141,9 @@ export default function Index() {
 						</Form>
 					</div>
 
-					{/* 結果表示部分 */}
 					{actionData && (
 						<div className="space-y-3">
-							{actionData.status === "success" &&
-							actionData.contents &&
-							actionData.contents.body.length > 0 ? (
+							{actionData.contents && actionData.contents.body.length > 0 ? (
 								actionData.contents.body.map((pair, index) => (
 									<div
 										key={pair.en.slice(0, 20)}

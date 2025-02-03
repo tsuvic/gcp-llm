@@ -3,6 +3,7 @@ import { Link, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
 import { Header } from "../components/Header";
 import { getContents } from "../function/firebase";
+import type { ContentGetCollection } from "../types";
 
 export const meta: MetaFunction = () => {
 	return [{ title: "ARTICLEPLAY - コンテンツ一覧" }];
@@ -21,7 +22,10 @@ export const loader: LoaderFunction = async () => {
 };
 
 export default function Index() {
-	const { contents, dates } = useLoaderData<typeof loader>();
+	const { contents, dates } = useLoaderData<{
+		contents: ContentGetCollection[];
+		dates: string[];
+	}>();
 	const [titleFilter, setTitleFilter] = useState("");
 	const [urlFilter, setUrlFilter] = useState("");
 	const [startDate, setStartDate] = useState("");

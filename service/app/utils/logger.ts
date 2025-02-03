@@ -1,51 +1,52 @@
-type LogLevel = "debug" | "info" | "warn" | "error";
+import winston from "winston";
 
-interface LogData {
-	message: string;
-	[key: string]: unknown;
+const logger = winston.createLogger({
+	level: process.env.NODE_ENV === "development" ? "debug" : "info",
+	format: winston.format.combine(
+		winston.format.timestamp(),
+		winston.format.errors({ stack: true }),
+		winston.format.json(),
+	),
+	defaultMeta: {
+		service: "articleplay",
+		environment: process.env.NODE_ENV || "development",
+	},
+	transports: [
+		new winston.transports.Console({
+			format: winston.format.combine(
+				winston.format.colorize(),
+				winston.format.printf(({ level, message, timestamp, ...meta }) => {
+					const metaString = Object.keys(meta).length
+						? `\n${JSON.stringify(meta, null, 2)}`
+						: "";
+					return `${timestamp} ${level}: ${message}${metaString}`;
+				}),
+			),
+		}),
+	],
+});
+
+// 開発環境の場合はより詳細なログを出力
+if (process.env.NODE_ENV === "development") {
+	logger.add(
+		new winston.transports.File({
+			filename: "logs/error.log",
+			level: "error",
+			format: winston.format.combine(
+				winston.format.timestamp(),
+				winston.format.json(),
+			),
+		}),
+	);
+	logger.add(
+		new winston.transports.File({
+			filename: "logs/combined.log",
+			format: winston.format.combine(
+				winston.format.timestamp(),
+				winston.format.json(),
+			),
+		}),
+	);
 }
 
-class Logger {
-	private static instance: Logger;
-	private environment: string;
-
-	private constructor() {
-		this.environment = process.env.NODE_ENV || "development";
-	}
-
-	public static getInstance(): Logger {
-		if (!Logger.instance) {
-			Logger.instance = new Logger();
-		}
-		return Logger.instance;
-	}
-
-	private formatLog(level: LogLevel, data: LogData): string {
-		return JSON.stringify({
-			timestamp: new Date().toISOString(),
-			level,
-			environment: this.environment,
-			...data,
-		});
-	}
-
-	debug(data: LogData): void {
-		if (this.environment === "development") {
-			console.log(this.formatLog("debug", data));
-		}
-	}
-
-	info(data: LogData): void {
-		console.log(this.formatLog("info", data));
-	}
-
-	warn(data: LogData): void {
-		console.warn(this.formatLog("warn", data));
-	}
-
-	error(data: LogData): void {
-		console.error(this.formatLog("error", data));
-	}
-}
-
-export const logger = Logger.getInstance();
+export { logger };

@@ -1,11 +1,10 @@
-import { Timestamp } from "@google-cloud/firestore";
 import { TextToSpeechClient } from "@google-cloud/text-to-speech";
 import {
 	HarmBlockThreshold,
 	HarmCategory,
 	VertexAI,
 } from "@google-cloud/vertexai";
-import type { ContentSetCollection, Contents } from "~/types";
+import type { Contents } from "../types";
 import { logger } from "../utils/logger";
 import { uploadAudio, uploadText } from "./storage";
 

@@ -3,7 +3,7 @@ node_modules
 /.cache
 /build
 .env
-.command
+.cmd
 
 output/audio
 output/text
