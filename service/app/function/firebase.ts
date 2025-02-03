@@ -75,12 +75,6 @@ export const getContent = async (userId: string, contentId: string) => {
 			return null;
 		}
 
-		logger.info({
-			message: "Content retrieved from Firestore",
-			userId,
-			contentId,
-		});
-
 		return contentSnapshot.data() as ContentGetCollection;
 	} catch (error) {
 		logger.error({

@@ -7,7 +7,8 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 # 任意のパッケージマネージャーを有効にしてくれる。しかし、将来的にNode.jsのバンドルから削除されるらしい。
 # https://zenn.dev/monicle/articles/1c06f3f75b2cb1
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# corepack bug 早く移行した方がいい　https://github.com/nodejs/corepack/issues/612
+RUN corepack enable && corepack prepare pnpm@10.0.0 --activate
 
 # BUG? https://github.com/npm/cli/issues/5183
 # package.jsonもバインドマウントしたかったが、無理なのでコピーする。
