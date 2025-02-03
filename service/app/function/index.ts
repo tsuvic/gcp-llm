@@ -77,6 +77,7 @@ export async function processWebContent(
 
 	// 音声処理
 	const client = new TextToSpeechClient();
+	const audioContents = [];
 	for (let i = 0; i < contents.body.length; i++) {
 		const [response] = await client.synthesizeSpeech({
 			input: { text: contents.body[i].en },
@@ -89,19 +90,22 @@ export async function processWebContent(
 				speakingRate: 1.0,
 			},
 		});
-
 		if (response.audioContent && response.audioContent instanceof Uint8Array) {
+			// ストレージにアップロード
 			await uploadAudio(
 				Buffer.from(response.audioContent),
 				contentId,
 				i + 1,
 				userId,
 			);
+			// Base64エンコードしてクライアントに返す
+			audioContents.push(Buffer.from(response.audioContent).toString("base64"));
 		}
 	}
 
 	return {
 		contents: contents,
+		audioContents,
 		processingTime,
 		finishReason: res.candidates?.[0]?.finishReason || "UNKNOWN",
 		countTotalTokens: count.totalTokens,

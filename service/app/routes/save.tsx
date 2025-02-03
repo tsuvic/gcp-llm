@@ -19,7 +19,7 @@ export const meta: MetaFunction = () => {
 export async function action({ request }: ActionFunctionArgs) {
 	try {
 		const formData = await request.formData();
-		const url = formData.get("fileUri");
+		const url = formData.get("url");
 		const contentId = `${Date.now()}`;
 		const userId = "100";
 
@@ -39,7 +39,6 @@ export async function action({ request }: ActionFunctionArgs) {
 		});
 
 		const result = await processWebContent(url.toString(), contentId, userId);
-		const audioContents: string[] = [];
 
 		console.log("処理完了:", {
 			url: url.toString(),
@@ -58,7 +57,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			updatedAt: Timestamp.now(),
 			status: "completed",
 		};
-		await saveContent(content, contentId, userId);
+		await saveContent(content, userId, contentId);
 
 		return {
 			status: "success",
@@ -68,7 +67,9 @@ export async function action({ request }: ActionFunctionArgs) {
 			finishReason: result.finishReason,
 			countTotalTokens: result.countTotalTokens,
 			totalTokens: result.totalTokens,
-			audioContents,
+			audioContents: result.audioContents.map(
+				(audio) => `data:audio/mp3;base64,${audio}`,
+			),
 		};
 	} catch (error) {
 		return handleError(error);
@@ -110,13 +111,40 @@ export default function Index() {
 								<button
 									type="submit"
 									disabled={isProcessing}
-									className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+									className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors flex items-center gap-2 ${
 										isProcessing
 											? "bg-gray-400 dark:bg-gray-600 text-gray-200 dark:text-gray-400 cursor-not-allowed"
 											: "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200"
 									}`}
 								>
-									{isProcessing ? "Processing..." : "Save"}
+									{isProcessing ? (
+										<>
+											<svg
+												className="animate-spin h-4 w-4"
+												xmlns="http://www.w3.org/2000/svg"
+												fill="none"
+												viewBox="0 0 24 24"
+											>
+												<title>Processing...</title>
+												<circle
+													className="opacity-25"
+													cx="12"
+													cy="12"
+													r="10"
+													stroke="currentColor"
+													strokeWidth="4"
+												/>
+												<path
+													className="opacity-75"
+													fill="currentColor"
+													d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+												/>
+											</svg>
+											Processing...
+										</>
+									) : (
+										"Save"
+									)}
 								</button>
 							</div>
 						</Form>
@@ -129,7 +157,7 @@ export default function Index() {
 								actionData.contents.body.map((pair, index) => (
 									<div
 										key={pair.en.slice(0, 20)}
-										className="p-2 rounded-lg bg-white dark:bg-gray-800 shadow-sm"
+										className="p-1 sm:p-2 rounded-lg bg-white dark:bg-gray-800 shadow-sm"
 									>
 										<p className="text-sm leading-relaxed text-gray-900 dark:text-gray-100 mb-1 px-1">
 											{pair.en}
@@ -140,19 +168,82 @@ export default function Index() {
 										{actionData.audioContents?.[index] && (
 											<div className="space-y-2">
 												<audio
+													id={`audio-${index}`}
 													controls
 													className="w-full h-8"
 													src={actionData.audioContents[index]}
 												>
 													<track kind="captions" />
 												</audio>
+												<div className="flex gap-1">
+													<button
+														type="button"
+														onClick={() => {
+															const audio = document.getElementById(
+																`audio-${index}`,
+															) as HTMLAudioElement;
+															if (audio) {
+																audio.currentTime = Math.max(
+																	0,
+																	audio.currentTime - 2,
+																);
+															}
+														}}
+														className="flex-1 py-1.5 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-all"
+													>
+														<svg
+															className="w-4 h-4"
+															fill="none"
+															stroke="currentColor"
+															viewBox="0 0 24 24"
+														>
+															<title>Previous</title>
+															<path
+																strokeLinecap="round"
+																strokeLinejoin="round"
+																strokeWidth={2}
+																d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
+															/>
+														</svg>
+													</button>
+													<button
+														type="button"
+														onClick={() => {
+															const audio = document.getElementById(
+																`audio-${index}`,
+															) as HTMLAudioElement;
+															if (audio) {
+																audio.currentTime = Math.min(
+																	audio.duration,
+																	audio.currentTime + 2,
+																);
+															}
+														}}
+														className="flex-1 py-1.5 flex items-center justify-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-all"
+													>
+														<svg
+															className="w-4 h-4"
+															fill="none"
+															stroke="currentColor"
+															viewBox="0 0 24 24"
+														>
+															<title>Next</title>
+															<path
+																strokeLinecap="round"
+																strokeLinejoin="round"
+																strokeWidth={2}
+																d="M13 5l7 7-7 7M5 5l7 7-7 7"
+															/>
+														</svg>
+													</button>
+												</div>
 											</div>
 										)}
 									</div>
 								))
 							) : (
 								<p className="text-sm text-gray-500 dark:text-gray-400">
-									データがありません
+									処理ができないコンテンツです。他のコンテンツを対象にしてください。
 								</p>
 							)}
 						</div>
