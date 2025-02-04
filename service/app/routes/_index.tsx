@@ -16,7 +16,6 @@ export const loader: LoaderFunction = async ({ request }) => {
 	if (!session) {
 		throw redirect("/login");
 	}
-	console.log("tenantId", session.tenantId);
 	const contents = await getContents(session.tenantId);
 	return {
 		contents: contents,

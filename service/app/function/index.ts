@@ -17,7 +17,7 @@ const MAX_OUTPUT_TOKENS = process.env.MAX_OUTPUT_TOKENS
 	: 100;
 
 // Vertex AIでのコンテン0ツ処理
-export async function createContent(url: string, userId: string) {
+export async function createContent(url: string, tenantId: string) {
 	if (!process.env.GCP_PROJECT_ID) {
 		throw new Error("GCP_PROJECT_ID is not set");
 	}
@@ -25,7 +25,7 @@ export async function createContent(url: string, userId: string) {
 	const contentId = ulid();
 	logger.info({
 		message: "処理開始",
-		userId,
+		tenantId,
 		contentId,
 		url: url.toString(),
 		timestamp: new Date().toISOString(),
@@ -52,7 +52,7 @@ export async function createContent(url: string, userId: string) {
 		logger.info({
 			message: "処理結果",
 			contentId,
-			userId,
+			tenantId,
 			content,
 			res,
 		});
@@ -93,7 +93,7 @@ export async function createContent(url: string, userId: string) {
 			counTotalTokens: count.totalTokens,
 			totalTokens: res.usageMetadata?.totalTokenCount || 0,
 		};
-		await uploadText(JSON.stringify(outputData, null, 2), contentId, userId);
+		await uploadText(JSON.stringify(outputData, null, 2), contentId, tenantId);
 
 		// 音声処理
 		const client = new TextToSpeechClient();
@@ -119,7 +119,7 @@ export async function createContent(url: string, userId: string) {
 					Buffer.from(response.audioContent),
 					contentId,
 					i + 1,
-					userId,
+					tenantId,
 				);
 				// Base64エンコードしてクライアントに返す
 				audioContents.push(
@@ -130,7 +130,7 @@ export async function createContent(url: string, userId: string) {
 
 		logger.info({
 			message: "処理完了",
-			userId,
+			tenantId,
 			contentId,
 			url: url.toString(),
 			processingTime: `${processingTime.toFixed(2)}ミリ秒`,
@@ -152,7 +152,7 @@ export async function createContent(url: string, userId: string) {
 		logger.error({
 			message: "Content processing failed",
 			contentId,
-			userId,
+			tenantId,
 			error: error instanceof Error ? error.message : "Unknown error",
 		});
 		throw error;

@@ -10,9 +10,9 @@ const db = new Firestore({
 });
 
 export const createAccount = async (user: User) => {
-	const userRef = db.collection("users").doc(user.tenantId); //tenantIdをドキュメントキーとして保存
-	// idはfirestoreのドキュメントキーとして保存するため、userオブジェクトから除外
-	const { id, ...userData } = user;
+	const userRef = db.collection("users").doc(user.tenantId); //google sub idをテナントキーとしてドキュメントキーとして保存
+	// tenantIdはfirestoreのドキュメントキーとして保存するため、userオブジェクトから除外
+	const { tenantId: id, ...userData } = user;
 	await userRef.set({
 		...userData,
 		createdAt: Timestamp.fromDate(new Date()),
@@ -24,11 +24,11 @@ export const createAccount = async (user: User) => {
 
 export const saveContent = async (
 	data: ContentSetCollection,
-	userId: string,
+	tenantId: string,
 	contentId: string,
 ) => {
 	try {
-		const userDocRef = db.collection("users").doc(userId);
+		const userDocRef = db.collection("users").doc(tenantId);
 		const contentDocRef = userDocRef.collection("contents").doc(contentId);
 
 		const now = toJSTDate(new Date());
@@ -46,7 +46,7 @@ export const saveContent = async (
 	} catch (error) {
 		logger.error({
 			message: "Failed to save content to Firestore",
-			userId,
+			userId: tenantId,
 			error: error instanceof Error ? error.message : "Unknown error",
 		});
 		throw error;
