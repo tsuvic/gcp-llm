@@ -1,9 +1,9 @@
 import { Storage } from "@google-cloud/storage";
 import type { LoaderFunction, MetaFunction } from "@remix-run/node";
 import { redirect, useLoaderData } from "@remix-run/react";
-import { getSessionUser } from "~/services/session.server";
 import type { ContentGetCollection, Contents } from "~/types";
 import { getContent } from "../function/firebase";
+import { getSessionUser } from "../services/session.server";
 
 const storage = new Storage();
 const bucketName = process.env.GCP_STORAGE_BUCKET || "";

@@ -1,8 +1,8 @@
 import type { LoaderFunction, MetaFunction } from "@remix-run/node";
 import { Link, redirect, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
-import { getSessionUser } from "~/services/session.server";
 import { getContents } from "../function/firebase";
+import { getSessionUser } from "../services/session.server";
 import type { ContentGetCollection } from "../types";
 import { toJSTString } from "../utils/date";
 

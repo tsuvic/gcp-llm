@@ -245,7 +245,6 @@ pnpm install --include=optional
 
 ## todo
 
-[ ]eventid ulid
 [ ]jst
 [ ]remix wpa
 [ ]cloudflare waf

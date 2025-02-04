@@ -13,5 +13,5 @@ export function toJSTString(date: Date): string {
 }
 
 export function toJSTDate(date: Date): Date {
-	return new Date(date.toLocaleString("en-US", { timeZone: JP_TIMEZONE }));
+	return new Date(date.toLocaleString("ja-JP", { timeZone: JP_TIMEZONE }));
 }
