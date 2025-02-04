@@ -1,4 +1,5 @@
-import type { LinksFunction } from "@remix-run/node";
+import type { LinksFunction, LoaderFunction } from "@remix-run/node";
+import { redirect } from "@remix-run/node";
 import {
 	Links,
 	Meta,
@@ -6,6 +7,7 @@ import {
 	Scripts,
 	ScrollRestoration,
 } from "@remix-run/react";
+import { authenticator } from "./services/auth.server";
 
 import "./tailwind.css";
 
@@ -44,3 +46,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
 	return <Outlet />;
 }
+
+export const loader: LoaderFunction = async ({ request }) => {
+	const user = await authenticator.isAuthenticated(request);
+
+	// ログインページ以外でユーザーが未認証の場合はログインページにリダイレクト
+	const url = new URL(request.url);
+	if (!user && url.pathname !== "/login") {
+		throw redirect("/login");
+	}
+
+	return user;
+};

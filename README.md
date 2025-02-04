@@ -75,6 +75,9 @@ Cloud Run はデフォルトで 8080 で動く。PORT 環境変数も設定し�
 
 Private な場合の接続方法が知りたい
 
+[log](https://zenn.dev/dinii/articles/c8ca221b3eda5b)
+[log](https://zenn.dev/knowledgework/articles/cloud-logging-special-payload-fields)
+
 ## Vertex AI
 
 [Vertex AI API リファレンス](https://cloud.google.com/vertex-ai/pricing?hl=ja)
@@ -216,6 +219,14 @@ curl -X POST -H "Content-Type: application/x-www-form-urlencoded" -d "fileUri=ht
 
 [text](https://zenn.dev/google_cloud_jp/articles/5104d1d1f28560)
 
+## auth
+
+remix auth 使わない方法もある lucia auth
+[lucia remix](https://tech.crassone.jp/posts/remix-on-cloudflare-with-lucia-auth)
+
+remix react router v7 に合わせて remix-auth v4 も出たが、remix-auth-google は追従してない
+remix-auth v3 で remix-auth-google の peer を満たすように使う
+
 ## todo
 
 eventid ulid
@@ -224,4 +235,6 @@ remix wpa
 cloudflare waf
 doc
 node env why where production?
-[log](https://zenn.dev/dinii/articles/c8ca221b3eda5b)
+エラーログ構造化されない
+favicon 404
+locale time

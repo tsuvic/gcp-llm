@@ -1,4 +1,5 @@
 import { Firestore, Timestamp } from "@google-cloud/firestore";
+import type { User } from "../services/auth.server";
 import type { ContentGetCollection, ContentSetCollection } from "../types";
 import { toJSTDate } from "../utils/date";
 import { logger } from "../utils/logger";
@@ -7,6 +8,16 @@ const db = new Firestore({
 	projectId: process.env.GCP_PROJECT_ID,
 	databaseId: "gcp-llm",
 });
+
+export const findOrCreateUser = async (user: User) => {
+	const userRef = db.collection("users").doc(user.id);
+	const userSnapshot = await userRef.get();
+	if (userSnapshot.exists) {
+		return userSnapshot.data() as User;
+	}
+	await userRef.set(user);
+	return user;
+};
 
 export const saveContent = async (
 	data: ContentSetCollection,
