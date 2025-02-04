@@ -85,7 +85,7 @@ export default function Index() {
 	}, [actionData]);
 
 	return (
-		<div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+		<div className="bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
 			<main className="max-w-7xl mx-auto px-2 sm:px-4 py-2">
 				<div className="space-y-3">
 					<div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm px-3 py-2">
