@@ -104,6 +104,9 @@ function Layout() {
 											<p className="text-xs font-bold text-gray-900 dark:text-gray-100 mb-1">
 												{session.name}
 											</p>
+											<p className="text-xs text-gray-400 dark:text-gray-200 mb-1">
+												@{session.userId}
+											</p>
 										</div>
 										<Form action="/logout" method="post">
 											<button
