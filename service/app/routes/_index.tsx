@@ -1,7 +1,6 @@
 import type { LoaderFunction, MetaFunction } from "@remix-run/node";
 import { Link, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
-import { Header } from "../components/Header";
 import { getContents } from "../function/firebase";
 import type { ContentGetCollection } from "../types";
 import { toJSTString } from "../utils/date";
@@ -54,8 +53,6 @@ export default function Index() {
 
 	return (
 		<div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-			<Header />
-
 			<main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
 				{/* PC表示用フィルター */}
 				<div className="hidden md:flex items-start mb-6">

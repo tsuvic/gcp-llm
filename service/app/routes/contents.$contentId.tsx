@@ -2,7 +2,6 @@ import { Storage } from "@google-cloud/storage";
 import type { LoaderFunction, MetaFunction } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import type { ContentGetCollection, Contents } from "~/types";
-import { Header } from "../components/Header";
 import { getContent } from "../function/firebase";
 
 const storage = new Storage();
@@ -60,8 +59,6 @@ export default function ContentDetail() {
 
 	return (
 		<div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-			<Header />
-
 			<main className="max-w-5xl mx-auto px-2 sm:px-4 py-4">
 				<div className="flex flex-col items-center mb-2">
 					<a

@@ -254,3 +254,4 @@ node env why where production?
 エラーログ構造化されない
 favicon 404
 locale time
+remix で layout route を作らずにヘッダーコンポーネントを各ルートに差し込んでた

@@ -2,7 +2,6 @@ import { Timestamp } from "@google-cloud/firestore";
 import type { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Form, useActionData, useNavigation } from "@remix-run/react";
 import { useEffect, useState } from "react";
-import { Header } from "../components/Header";
 import { createContent, handleError } from "../function";
 import { saveContent } from "../function/firebase";
 import type { ContentSetCollection } from "../types";
@@ -83,8 +82,6 @@ export default function Index() {
 
 	return (
 		<div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-			<Header />
-
 			<main className="max-w-7xl mx-auto px-2 sm:px-4 py-2">
 				<div className="space-y-3">
 					<div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm px-3 py-2">
