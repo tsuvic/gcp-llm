@@ -4,7 +4,7 @@ import { useState } from "react";
 import { getContents } from "../function/firebase";
 import { getSessionUser } from "../services/session.server";
 import type { ContentGetCollection } from "../types";
-import { toJSTString } from "../utils/date";
+import { toJSTDate, toJSTString } from "../utils/date";
 
 export const meta: MetaFunction = () => {
 	return [{ title: "ARTICLEPLAY - コンテンツ一覧" }];
@@ -48,10 +48,10 @@ export default function Index() {
 		const matchesUrl = content.url
 			.toLowerCase()
 			.includes(urlFilter.toLowerCase());
-		const date = new Date(dates[index]);
+		const date = toJSTDate(new Date(dates[index]));
 		const matchesDate =
-			(!startDate || date >= new Date(startDate)) &&
-			(!endDate || date <= new Date(endDate));
+			(!startDate || date >= toJSTDate(new Date(startDate))) &&
+			(!endDate || date <= toJSTDate(new Date(endDate)));
 		return matchesTitle && matchesUrl && matchesDate;
 	});
 
