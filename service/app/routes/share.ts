@@ -1,4 +1,5 @@
-import type { ActionFunctionArgs } from "@remix-run/node";
+import { type ActionFunctionArgs, redirect } from "@remix-run/node";
+import { getSessionUser as getSession } from "~/services/session.server";
 import { createContent } from "../function";
 import { logger } from "../utils/logger";
 
@@ -6,7 +7,10 @@ export async function action({ request }: ActionFunctionArgs) {
 	try {
 		const formData = await request.formData();
 		const url = formData.get("fileUri");
-		const userId = "100";
+		const session = await getSession(request);
+		if (!session) {
+			throw redirect("/login");
+		}
 
 		if (!url) {
 			console.error("URLが指定されていません");
@@ -18,7 +22,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			});
 		}
 
-		const result = await createContent(url.toString(), userId);
+		const result = await createContent(url.toString(), session.tenantId);
 
 		return new Response(JSON.stringify({ contentId: result.contentId }), {
 			status: 200,

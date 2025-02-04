@@ -1,6 +1,7 @@
 import type { LoaderFunction, MetaFunction } from "@remix-run/node";
-import { Link, useLoaderData } from "@remix-run/react";
+import { Link, redirect, useLoaderData } from "@remix-run/react";
 import { useState } from "react";
+import { getSessionUser } from "~/services/session.server";
 import { getContents } from "../function/firebase";
 import type { ContentGetCollection } from "../types";
 import { toJSTString } from "../utils/date";
@@ -10,9 +11,13 @@ export const meta: MetaFunction = () => {
 };
 
 // Loader 関数を追加して Firestore からデータを取得
-export const loader: LoaderFunction = async () => {
-	const userId = "100"; // 実際のユーザーIDを取得する方法に置き換えてください
-	const contents = await getContents(userId);
+export const loader: LoaderFunction = async ({ request }) => {
+	const session = await getSessionUser(request);
+	if (!session) {
+		throw redirect("/login");
+	}
+	console.log("tenantId", session.tenantId);
+	const contents = await getContents(session.tenantId);
 	return {
 		contents: contents,
 		dates: contents.map((content) => toJSTString(content.createdAt.toDate())),
@@ -52,7 +57,7 @@ export default function Index() {
 	});
 
 	return (
-		<div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+		<div className="bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
 			<main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
 				{/* PC表示用フィルター */}
 				<div className="hidden md:flex items-start mb-6">

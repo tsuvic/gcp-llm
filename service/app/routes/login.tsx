@@ -1,9 +1,9 @@
 import type { LoaderFunction } from "@remix-run/node";
-import { Form } from "@remix-run/react";
+import { Form, redirect } from "@remix-run/react";
 import { authenticator } from "../services/auth.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
-	// すでにログインしている場合はホームにリダイレクト
+	// successRedirectオプションを使用
 	return await authenticator.isAuthenticated(request, {
 		successRedirect: "/",
 	});

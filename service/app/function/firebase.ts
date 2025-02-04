@@ -9,13 +9,16 @@ const db = new Firestore({
 	databaseId: "gcp-llm",
 });
 
-export const findOrCreateUser = async (user: User) => {
-	const userRef = db.collection("users").doc(user.id);
-	const userSnapshot = await userRef.get();
-	if (userSnapshot.exists) {
-		return userSnapshot.data() as User;
-	}
-	await userRef.set(user);
+export const createAccount = async (user: User) => {
+	const userRef = db.collection("users").doc(user.tenantId); //tenantIdをドキュメントキーとして保存
+	// idはfirestoreのドキュメントキーとして保存するため、userオブジェクトから除外
+	const { id, ...userData } = user;
+	await userRef.set({
+		...userData,
+		createdAt: Timestamp.fromDate(new Date()),
+		updatedAt: Timestamp.fromDate(new Date()),
+	});
+
 	return user;
 };
 

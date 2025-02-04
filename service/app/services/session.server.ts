@@ -1,4 +1,5 @@
 import { createCookieSessionStorage } from "@remix-run/node";
+import type { Session } from "./auth.server";
 import { authenticator } from "./auth.server";
 
 if (!process.env.SESSION_SECRET) {
@@ -19,7 +20,9 @@ export const sessionStorage = createCookieSessionStorage({
 
 export const { getSession, commitSession, destroySession } = sessionStorage;
 
-export const getSessionUser = async (request: Request) => {
+export const getSessionUser = async (
+	request: Request,
+): Promise<Session | null> => {
 	const session = await getSession(request.headers.get("Cookie"));
 	return session.get(authenticator.sessionKey);
 };

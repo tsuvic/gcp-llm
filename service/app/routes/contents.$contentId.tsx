@@ -1,6 +1,7 @@
 import { Storage } from "@google-cloud/storage";
 import type { LoaderFunction, MetaFunction } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { redirect, useLoaderData } from "@remix-run/react";
+import { getSessionUser } from "~/services/session.server";
 import type { ContentGetCollection, Contents } from "~/types";
 import { getContent } from "../function/firebase";
 
@@ -17,16 +18,20 @@ type LoaderData = {
 	audioContents: string[];
 };
 
-export const loader: LoaderFunction = async ({ params }) => {
-	const userId = "100";
+export const loader: LoaderFunction = async ({ params, request }) => {
 	const contentId = params.contentId;
 	if (!contentId) throw new Error("Content ID is required");
-
-	const content = await getContent(userId, contentId);
+	const session = await getSessionUser(request);
+	if (!session) {
+		throw redirect("/login");
+	}
+	const content = await getContent(session.tenantId, contentId);
 	if (!content) throw new Error("Content not found");
 
 	const bucket = storage.bucket(bucketName);
-	const transcriptFile = bucket.file(`text/${userId}/${contentId}.json`);
+	const transcriptFile = bucket.file(
+		`text/${session.tenantId}/${contentId}.json`,
+	);
 	const [transcriptExists] = await transcriptFile.exists();
 
 	let transcript: Contents;
@@ -44,7 +49,7 @@ export const loader: LoaderFunction = async ({ params }) => {
 	const audioContents = await Promise.all(
 		Array.from({ length: content.audioCount }, async (_, i) => {
 			const audioFile = bucket.file(
-				`audio/${userId}/${contentId}-${i + 1}.mp3`,
+				`audio/${session.tenantId}/${contentId}-${i + 1}.mp3`,
 			);
 			const [buffer] = await audioFile.download();
 			return `data:audio/mp3;base64,${buffer.toString("base64")}`;

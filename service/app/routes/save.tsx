@@ -1,9 +1,10 @@
 import { Timestamp } from "@google-cloud/firestore";
 import type { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
-import { Form, useActionData, useNavigation } from "@remix-run/react";
+import { Form, redirect, useActionData, useNavigation } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import { createContent, handleError } from "../function";
 import { saveContent } from "../function/firebase";
+import { getSessionUser } from "../services/session.server";
 import type { ContentSetCollection } from "../types";
 import { toJSTDate } from "../utils/date";
 import { logger } from "../utils/logger";
@@ -22,7 +23,10 @@ export async function action({ request }: ActionFunctionArgs) {
 	try {
 		const formData = await request.formData();
 		const url = formData.get("url");
-		const userId = "100";
+		const session = await getSessionUser(request);
+		if (!session) {
+			throw redirect("/login");
+		}
 
 		if (!url) {
 			logger.error({
@@ -37,7 +41,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			};
 		}
 
-		const result = await createContent(url.toString(), userId);
+		const result = await createContent(url.toString(), session.tenantId);
 
 		const now = toJSTDate(new Date());
 		const content: ContentSetCollection = {
@@ -48,7 +52,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			updatedAt: Timestamp.fromDate(now),
 			status: "completed",
 		};
-		await saveContent(content, userId, result.contentId);
+		await saveContent(content, session.tenantId, result.contentId);
 
 		return {
 			status: "success",

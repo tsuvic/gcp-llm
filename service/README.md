@@ -245,13 +245,14 @@ pnpm install --include=optional
 
 ## todo
 
-eventid ulid
-jst
-remix wpa
-cloudflare waf
-doc
-node env why where production?
-エラーログ構造化されない
-favicon 404
-locale time
-remix で layout route を作らずにヘッダーコンポーネントを各ルートに差し込んでた
+[ ]eventid ulid
+[ ]jst
+[ ]remix wpa
+[ ]cloudflare waf
+[ ]doc zenn
+[v]node env why where production?
+[v]エラーログ構造化されない
+[v]favicon 404
+[ ]locale time
+[ ] remix で layout route を作らずにヘッダーコンポーネントを各ルートに差し込んでた
+[ ] 把握しきれないスタイル。指示しても治らなくなる
