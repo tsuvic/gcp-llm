@@ -32,7 +32,7 @@ export interface ContentGetCollection {
 	url: string; // 元のURL
 	audioCount: number; // 音声ファイルの数
 	title: string; // コンテンツのタイトル
-	createdAt: Timestamp; // 作成日時
-	updatedAt: Timestamp; // 更新日時
+	createdAt: Date; // 作成日時
+	updatedAt: Date; // 更新日時
 	status: "processing" | "completed" | "error"; // 処理状態
 }

@@ -4,7 +4,6 @@ import { useState } from "react";
 import { getContents } from "../function/firebase";
 import { getSessionUser } from "../services/session.server";
 import type { ContentGetCollection } from "../types";
-import { toJSTDate, toJSTString } from "../utils/date";
 
 export const meta: MetaFunction = () => {
 	return [{ title: "ARTICLEPLAY - コンテンツ一覧" }];
@@ -19,14 +18,12 @@ export const loader: LoaderFunction = async ({ request }) => {
 	const contents = await getContents(session.tenantId);
 	return {
 		contents: contents,
-		dates: contents.map((content) => toJSTString(content.createdAt.toDate())),
 	};
 };
 
 export default function Index() {
-	const { contents, dates } = useLoaderData<{
+	const { contents } = useLoaderData<{
 		contents: ContentGetCollection[];
-		dates: string[];
 	}>();
 	const [titleFilter, setTitleFilter] = useState("");
 	const [urlFilter, setUrlFilter] = useState("");
@@ -41,18 +38,30 @@ export default function Index() {
 		setActiveFilter((current) => (current === filter ? null : filter));
 	};
 
+	// HTML input type dateではタイムゾーンを持たない単なる日付の文字列
+	// Dateオブジェクトではユーザーの入力環境の時間になる（日本環境では2025/02/06の文字列は、09:00:00 JSTとなる）
+	const start = new Date(startDate);
+	const end = new Date(endDate);
+	console.log("start", start);
+
+	// memo
+	// getTimezoneOffsetは、ローカルタイムゾーンがUTCより早い場合はマイナス、遅い場合はプラスの値を返す
+	// BerlinはUTC+1なので、getTimezoneOffsetは-60分（1時間）となる
+
+	// 入力された日付の開始時刻と終了時刻を設定し、エポックタイムをミリ秒単位で返す
+	const startTime = start.setHours(0, 0, 0, 0);
+	const endTime = end.setHours(23, 59, 59, 999);
+
 	const filteredContents = contents.filter((content) => {
+		const time = content.createdAt.getTime();
+		const matchesDate =
+			(!startDate || time >= startTime) && (!endDate || time <= endTime);
 		const matchesTitle = content.title
 			.toLowerCase()
 			.includes(titleFilter.toLowerCase());
 		const matchesUrl = content.url
 			.toLowerCase()
 			.includes(urlFilter.toLowerCase());
-		const date = new Date(content.createdAt).getTime();
-		const matchesDate =
-			(!startDate ||
-				date >= new Date(`${startDate}T00:00:00+09:00`).getTime()) &&
-			(!endDate || date <= new Date(`${endDate}T23:59:59+09:00`).getTime());
 		const match = matchesTitle && matchesUrl && matchesDate;
 		return match;
 	});
@@ -192,9 +201,9 @@ export default function Index() {
 
 				{/* コンテンツ一覧 */}
 				<div className="space-y-3">
-					{filteredContents.map((content, index) => (
+					{filteredContents.map((content) => (
 						<Link
-							key={content.url}
+							key={content.contentId}
 							to={`/contents/${content.contentId}`}
 							className="block h-16 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all border border-gray-100 dark:border-gray-700 hover:border-blue-100 dark:hover:border-blue-900 relative overflow-hidden group"
 						>
@@ -211,7 +220,7 @@ export default function Index() {
 								</div>
 								<div className="hidden md:block ml-4">
 									<span className="text-sm text-gray-700 dark:text-gray-300">
-										{dates[index]}
+										{content.createdAt.toLocaleString()}
 									</span>
 								</div>
 
@@ -224,7 +233,7 @@ export default function Index() {
 										{content.url}
 									</p>
 									<p className="text-xs text-right text-gray-600 dark:text-gray-400">
-										{dates[index]}
+										{content.createdAt.toLocaleString()}
 									</p>
 								</div>
 							</div>

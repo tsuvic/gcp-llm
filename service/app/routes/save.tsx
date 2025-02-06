@@ -6,7 +6,6 @@ import { createContent, handleError } from "../function";
 import { saveContent } from "../function/firebase";
 import { getSessionUser } from "../services/session.server";
 import type { ContentSetCollection } from "../types";
-import { toJSTDate } from "../utils/date";
 import { logger } from "../utils/logger";
 
 export const meta: MetaFunction = () => {
@@ -43,7 +42,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
 		const result = await createContent(url.toString(), session.tenantId);
 
-		const now = toJSTDate(new Date());
+		const now = new Date();
 		const content: ContentSetCollection = {
 			url: url.toString(),
 			audioCount: result.contents.body.length,

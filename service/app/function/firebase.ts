@@ -1,7 +1,6 @@
 import { Firestore, Timestamp } from "@google-cloud/firestore";
 import type { User } from "../services/auth.server";
 import type { ContentGetCollection, ContentSetCollection } from "../types";
-import { toJSTDate } from "../utils/date";
 import { logger } from "../utils/logger";
 
 const db = new Firestore({
@@ -11,10 +10,12 @@ const db = new Firestore({
 
 export const createAccount = async (user: User) => {
 	const userRef = db.collection("users").doc(user.tenantId); //google sub idをテナントキーとしてドキュメントキーとして保存
-	// tenantIdはfirestoreのドキュメントキーとして保存するため、userオブジェクトから除外
-	const { tenantId: id, ...userData } = user;
 	await userRef.set({
-		...userData,
+		// tenantIdはfirestoreのドキュメントキーとして保存するため、userオブジェクトから除外
+		userId: user.userId,
+		name: user.name,
+		email: user.email,
+		avatarUrl: user.avatarUrl,
 		createdAt: Timestamp.fromDate(new Date()),
 		updatedAt: Timestamp.fromDate(new Date()),
 	});
@@ -30,18 +31,7 @@ export const saveContent = async (
 	try {
 		const userDocRef = db.collection("users").doc(tenantId);
 		const contentDocRef = userDocRef.collection("contents").doc(contentId);
-
-		const now = toJSTDate(new Date());
-		const contentData: ContentSetCollection = {
-			url: data.url,
-			audioCount: data.audioCount,
-			title: data.title,
-			createdAt: Timestamp.fromDate(now),
-			updatedAt: Timestamp.fromDate(now),
-			status: "completed",
-		};
-
-		await contentDocRef.set(contentData);
+		await contentDocRef.set(data);
 		return contentId;
 	} catch (error) {
 		logger.error({
@@ -62,6 +52,8 @@ export const getContents = async (userId: string) => {
 				({
 					contentId: doc.id,
 					...doc.data(),
+					createdAt: doc.data().createdAt.toDate(),
+					updatedAt: doc.data().updatedAt.toDate(),
 				}) as ContentGetCollection,
 		);
 
