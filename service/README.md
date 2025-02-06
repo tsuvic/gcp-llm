@@ -255,3 +255,7 @@ pnpm install --include=optional
 [ ]locale time
 [ ] remix で layout route を作らずにヘッダーコンポーネントを各ルートに差し込んでた
 [ ] 把握しきれないスタイル。指示しても治らなくなる
+
+## pwa
+
+[pwa](https://remix-pwa.run/docs/latest/quick-start)
