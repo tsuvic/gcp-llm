@@ -41,18 +41,20 @@ export default function Index() {
 		setActiveFilter((current) => (current === filter ? null : filter));
 	};
 
-	const filteredContents = contents.filter((content, index) => {
+	const filteredContents = contents.filter((content) => {
 		const matchesTitle = content.title
 			.toLowerCase()
 			.includes(titleFilter.toLowerCase());
 		const matchesUrl = content.url
 			.toLowerCase()
 			.includes(urlFilter.toLowerCase());
-		const date = toJSTDate(new Date(dates[index]));
+		const date = new Date(content.createdAt).getTime();
 		const matchesDate =
-			(!startDate || date >= toJSTDate(new Date(startDate))) &&
-			(!endDate || date <= toJSTDate(new Date(endDate)));
-		return matchesTitle && matchesUrl && matchesDate;
+			(!startDate ||
+				date >= new Date(`${startDate}T00:00:00+09:00`).getTime()) &&
+			(!endDate || date <= new Date(`${endDate}T23:59:59+09:00`).getTime());
+		const match = matchesTitle && matchesUrl && matchesDate;
+		return match;
 	});
 
 	return (
