@@ -102,13 +102,6 @@ export default function Index() {
 					<div className="grid grid-cols-5 gap-2">
 						<button
 							type="button"
-							onClick={() => setShowForm((prev) => !prev)}
-							className="col-span-2 h-9 bg-gray-700 dark:bg-gray-200 text-white dark:text-gray-900 text-center flex items-center justify-center text-xs font-semibold rounded-lg hover:bg-gray-800 dark:hover:bg-gray-300 transition-all"
-						>
-							{showForm ? "Cancel" : "New"}
-						</button>
-						<button
-							type="button"
 							onClick={() => toggleFilter("title")}
 							className={`h-9 text-xs rounded-lg transition-colors ${
 								activeFilter === "title"
@@ -140,6 +133,13 @@ export default function Index() {
 						>
 							Date
 						</button>
+						<button
+							type="button"
+							onClick={() => setShowForm((prev) => !prev)}
+							className="col-span-2 h-9 bg-gray-700 dark:bg-gray-200 text-white dark:text-gray-900 text-center flex items-center justify-center text-xs font-semibold rounded-lg hover:bg-gray-800 dark:hover:bg-gray-300 transition-all"
+						>
+							{showForm ? "Cancel" : "New"}
+						</button>
 					</div>
 
 					{/* URL入力フォーム */}
@@ -156,7 +156,11 @@ export default function Index() {
 							<button
 								type="submit"
 								disabled={isSaving}
-								className="px-4 h-9 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-400 transition-colors"
+								className={`px-4 h-9 text-xs font-semibold rounded-lg transition-colors ${
+									isSaving
+										? "bg-gray-400 dark:bg-gray-600 text-white cursor-not-allowed"
+										: "bg-gray-900 dark:bg-gray-200 text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-300"
+								}`}
 							>
 								{isSaving ? "保存中..." : "保存"}
 							</button>
