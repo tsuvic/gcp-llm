@@ -258,4 +258,11 @@ pnpm install --include=optional
 
 ## pwa
 
-[pwa](https://remix-pwa.run/docs/latest/quick-start)
+[remix pwa](https://remix-pwa.run/docs/latest/quick-start)
+[pwa mdn](https://developer.mozilla.org/ja/docs/Web/Manifest)
+remix pwa のセットアップしたが、モバイルで見ても、ホーム画面への設定ポップアップが出ない。
+mdn を見ながら、フレームワークとの差を確認していく。
+manifest.webmanifest が正しく生成されているか見る
+ディベロッパーツールから確認しようとしたが、Chrome では確認できない事例が多い
+とりあえず URL ベタ打ちして存在するか確認した。
+次に head タグに link があるか確認した。なさそう。フレームワークが動いてなさそうなので手動で追加
