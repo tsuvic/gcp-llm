@@ -212,10 +212,15 @@ export default function Index() {
 
 				{/* 成功メッセージ */}
 				{showSuccessMessage && (
-					<div className="mb-4 bg-green-600 text-white px-4 py-3 rounded-lg">
-						<p>記事の作成を開始しました。</p>
-						<p className="text-sm">処理には1-2分かかります。</p>
-						<p className="text-sm">しばらくしてから一覧を確認してください。</p>
+					<div className="mb-4 bg-gray-900 dark:bg-gray-200 rounded-lg">
+						<div className="px-3 py-2 space-y-1">
+							<p className="text-[11px] font-medium text-white dark:text-gray-900">
+								コンテンツの生成を開始
+							</p>
+							<p className="text-[10px] text-gray-300 dark:text-gray-600">
+								完了まで数分かかります。しばらくしてから一覧を確認してください。
+							</p>
+						</div>
 					</div>
 				)}
 
