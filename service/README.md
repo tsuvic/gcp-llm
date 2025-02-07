@@ -273,3 +273,8 @@ URL ではなく TITLE に URL が含まれる
 一定時間でブラウザがユーザーの利用時間に応じてポップアップを出す？
 .well-known/assetlinks.json を生成したが、効果を確認できてない
 apple-app-site-association も対応すべき
+
+## functions
+
+デフォルトの GSA 削除してデプロイできなくなった
+[default gsa restore](https://www.ren510.dev/blog/default-gsa-restore)

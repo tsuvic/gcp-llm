@@ -1,9 +1,10 @@
 node_modules
 
-/.cache
-/build
+.cache
+build
 .env
 .cmd
 
 output/audio
 output/text
+dist

@@ -13,8 +13,8 @@
   },
   "dependencies": {
     "@google-cloud/firestore": "^7.11.0",
+    "@google-cloud/pubsub": "^4.10.0",
     "@google-cloud/storage": "^7.15.0",
-    "@google-cloud/tasks": "^5.5.2",
     "@google-cloud/text-to-speech": "^5.8.0",
     "@google-cloud/vertexai": "^1.9.2",
     "@remix-pwa/sw": "^3.0.10",
@@ -51,7 +51,7 @@
     "sharp": "^0.33.5",
     "tailwindcss": "^3.4.4",
     "tsx": "^4.19.2",
-    "typescript": "^5.1.6",
+    "typescript": "^5.7.3",
     "vite": "^5.1.0",
     "vite-tsconfig-paths": "^4.2.1"
   },

@@ -1,0 +1,28 @@
+{
+  "name": "functions",
+  "version": "1.0.0",
+  "description": "Google Cloud Functions",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "functions-framework --target=invokeVertexAI",
+    "prestart": "npm run build",
+    "deploy": "gcloud functions deploy invokeVertexAI --gen2 --runtime=nodejs20 --region=asia-northeast1 --trigger-http --allow-unauthenticated"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "dependencies": {
+    "@google-cloud/firestore": "^7.11.0",
+    "@google-cloud/functions-framework": "^3.4.5",
+    "@google-cloud/storage": "^7.15.0",
+    "@google-cloud/text-to-speech": "^5.8.0",
+    "@google-cloud/vertexai": "^1.9.3",
+    "ulid": "^2.3.0",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
