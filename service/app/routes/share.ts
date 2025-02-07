@@ -1,25 +1,23 @@
-import { Timestamp } from "@google-cloud/firestore";
+import { PubSub } from "@google-cloud/pubsub";
 import { type ActionFunctionArgs, redirect } from "@remix-run/node";
-import type { ContentSetCollection } from "~/types";
-import { createContent } from "../function";
-import { saveContent } from "../function/firebase";
-import { getSessionUser as getSession } from "../services/session.server";
+import { getSessionUser } from "../services/session.server";
 import { logger } from "../utils/logger";
 
 export async function action({ request }: ActionFunctionArgs) {
+	if (!process.env.GCP_PROJECT_ID) {
+		throw new Error("GCP_PROJECT_ID is not set");
+	}
+	if (!process.env.PUBSUB_TOPIC) {
+		throw new Error("PUBSUB_TOPIC is not set");
+	}
+
 	try {
 		const formData = await request.formData();
 		const url = formData.get("url");
 		const text = formData.get("text");
 		const title = formData.get("title");
-		logger.info({
-			message: "share実行",
-			url,
-			text,
-			title,
-		});
 
-		const session = await getSession(request);
+		const session = await getSessionUser(request);
 		if (!session) {
 			throw redirect("/login");
 		}
@@ -36,38 +34,32 @@ export async function action({ request }: ActionFunctionArgs) {
 		if (!targetUrl) {
 			logger.error({
 				message: "URLが見つかりません",
-				formData: {
-					url,
-					text,
-					title,
-				},
+				formData: { url, text, title },
 				timestamp: new Date().toISOString(),
 			});
-			return new Response("URLが必要です", {
-				status: 400,
-				headers: {
-					"Content-Type": "application/json",
-				},
-			});
+			return new Response("URLが必要です", { status: 400 });
 		}
 
-		const result = await createContent(targetUrl, session.tenantId);
-		const now = new Date();
-		const content: ContentSetCollection = {
-			url: targetUrl.toString(),
-			audioCount: result.contents.body.length,
-			title: result.contents.title,
-			createdAt: Timestamp.fromDate(now),
-			updatedAt: Timestamp.fromDate(now),
-			status: "completed",
-		};
-		await saveContent(content, session.tenantId, result.contentId);
+		const pubsub = new PubSub();
+		const topic = pubsub.topic(process.env.PUBSUB_TOPIC);
 
-		return new Response(JSON.stringify({ contentId: result.contentId }), {
+		const messageData = {
+			url: targetUrl,
+			tenantId: session.tenantId,
+		};
+
+		const messageBuffer = Buffer.from(JSON.stringify(messageData));
+		const messageId = await topic.publish(messageBuffer);
+
+		logger.info({
+			message: "メッセージを送信しました",
+			messageId,
+			data: messageData,
+		});
+
+		return new Response(JSON.stringify({ status: "success" }), {
 			status: 200,
-			headers: {
-				"Content-Type": "application/json",
-			},
+			headers: { "Content-Type": "application/json" },
 		});
 	} catch (error) {
 		logger.error({
@@ -78,12 +70,8 @@ export async function action({ request }: ActionFunctionArgs) {
 
 		const errorMessage =
 			error instanceof Error ? error.message : "不明なエラーが発生しました";
-
 		return new Response(JSON.stringify({ error: errorMessage }), {
 			status: 500,
-			headers: {
-				"Content-Type": "application/json",
-			},
 		});
 	}
 }
