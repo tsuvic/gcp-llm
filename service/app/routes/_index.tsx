@@ -32,6 +32,9 @@ export default function Index() {
 	const [activeFilter, setActiveFilter] = useState<
 		"title" | "url" | "date" | null
 	>(null);
+	const [showForm, setShowForm] = useState(false);
+	const [isSaving, setIsSaving] = useState(false);
+	const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
 	// トグル機能を追加
 	const toggleFilter = (filter: "title" | "url" | "date") => {
@@ -65,62 +68,45 @@ export default function Index() {
 		return match;
 	});
 
+	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		setIsSaving(true);
+
+		const formData = new FormData(e.currentTarget);
+		try {
+			const response = await fetch("/save", {
+				method: "POST",
+				body: formData,
+			});
+
+			if (response.ok) {
+				setShowSuccessMessage(true);
+				setShowForm(false);
+				// 5秒後にメッセージを消す
+				setTimeout(() => {
+					setShowSuccessMessage(false);
+				}, 5000);
+			}
+		} catch (error) {
+			console.error(error);
+		} finally {
+			setIsSaving(false);
+		}
+	};
+
 	return (
 		<div className="bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
 			<main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-				{/* PC表示用フィルター */}
-				<div className="hidden md:flex items-start mb-6">
-					<div className="w-full grid grid-cols-12 gap-4">
-						<Link
-							to="/save"
-							className="col-span-2 px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-center flex items-center justify-center text-xs font-medium rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all"
-						>
-							Create Article
-						</Link>
-						<input
-							type="text"
-							placeholder="Search by title..."
-							value={titleFilter}
-							onChange={(e) => setTitleFilter(e.target.value)}
-							className="col-span-2 px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 
-									bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-						/>
-						<input
-							type="text"
-							placeholder="Search by URL..."
-							value={urlFilter}
-							onChange={(e) => setUrlFilter(e.target.value)}
-							className="col-span-2 px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 
-									bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-						/>
-						<div className="col-span-6 flex gap-2">
-							<input
-								type="date"
-								value={startDate}
-								onChange={(e) => setStartDate(e.target.value)}
-								className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 
-										bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-							/>
-							<input
-								type="date"
-								value={endDate}
-								onChange={(e) => setEndDate(e.target.value)}
-								className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 
-										bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-							/>
-						</div>
-					</div>
-				</div>
-
-				{/* スマホ表示用フィルター */}
-				<div className="md:hidden space-y-3 mb-6">
+				{/* フィルターエリア */}
+				<div className="space-y-3 mb-6">
 					<div className="grid grid-cols-5 gap-2">
-						<Link
-							to="/save"
-							className="col-span-2 h-9 bg-gray-700 dark:bg-gray-200 text-white dark:text-gray-900 text-center flex items-center justify-center text-xs font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-300 transition-all"
+						<button
+							type="button"
+							onClick={() => setShowForm((prev) => !prev)}
+							className="col-span-2 h-9 bg-gray-700 dark:bg-gray-200 text-white dark:text-gray-900 text-center flex items-center justify-center text-xs font-semibold rounded-lg hover:bg-gray-800 dark:hover:bg-gray-300 transition-all"
 						>
-							Create
-						</Link>
+							{showForm ? "Cancel" : "New"}
+						</button>
 						<button
 							type="button"
 							onClick={() => toggleFilter("title")}
@@ -156,24 +142,46 @@ export default function Index() {
 						</button>
 					</div>
 
+					{/* URL入力フォーム */}
+					{showForm && (
+						<form onSubmit={handleSubmit} className="flex gap-2">
+							<input
+								type="url"
+								name="url"
+								required
+								className="flex-1 h-9 px-3 text-sm rounded-lg border border-gray-300 dark:border-gray-600 
+									bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+								placeholder="https://example.com"
+							/>
+							<button
+								type="submit"
+								disabled={isSaving}
+								className="px-4 h-9 text-xs font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-400 transition-colors"
+							>
+								{isSaving ? "保存中..." : "保存"}
+							</button>
+						</form>
+					)}
+
+					{/* 検索フィルター */}
 					{activeFilter === "title" && (
 						<input
 							type="text"
-							placeholder="Search by title..."
+							placeholder="Filter by title..."
 							value={titleFilter}
 							onChange={(e) => setTitleFilter(e.target.value)}
 							className="w-full h-9 px-3 text-sm rounded-lg border border-gray-300 dark:border-gray-600 
-									bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+								bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
 						/>
 					)}
 					{activeFilter === "url" && (
 						<input
 							type="text"
-							placeholder="Search by URL..."
+							placeholder="Filter by URL..."
 							value={urlFilter}
 							onChange={(e) => setUrlFilter(e.target.value)}
 							className="w-full h-9 px-3 text-sm rounded-lg border border-gray-300 dark:border-gray-600 
-									bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+								bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
 						/>
 					)}
 					{activeFilter === "date" && (
@@ -197,6 +205,15 @@ export default function Index() {
 						</div>
 					)}
 				</div>
+
+				{/* 成功メッセージ */}
+				{showSuccessMessage && (
+					<div className="mb-4 bg-green-600 text-white px-4 py-3 rounded-lg">
+						<p>記事の作成を開始しました。</p>
+						<p className="text-sm">処理には1-2分かかります。</p>
+						<p className="text-sm">しばらくしてから一覧を確認してください。</p>
+					</div>
+				)}
 
 				{/* コンテンツ一覧 */}
 				<div className="space-y-3">
