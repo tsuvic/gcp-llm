@@ -1,5 +1,5 @@
 import type { LoaderFunction } from "@remix-run/node";
-import { Form, redirect } from "@remix-run/react";
+import { Form } from "@remix-run/react";
 import { authenticator } from "../services/auth.server";
 
 export const loader: LoaderFunction = async ({ request }) => {
@@ -14,7 +14,7 @@ export default function Login() {
 		<div className="px-4 py-12 bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
 			<div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 max-w-md w-full">
 				<h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 text-center mb-8">
-					Welcome to ARTICLEPLAY
+					Welcome to ArticlePlay
 				</h1>
 				<Form
 					action="/auth/google"

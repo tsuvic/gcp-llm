@@ -9,7 +9,7 @@ const storage = new Storage();
 const bucketName = process.env.GCP_STORAGE_BUCKET || "";
 
 export const meta: MetaFunction = () => {
-	return [{ title: "ARTICLEPLAY - コンテンツ詳細" }];
+	return [{ title: "ArticlePlay - content" }];
 };
 
 type LoaderData = {

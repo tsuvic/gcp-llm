@@ -6,7 +6,7 @@ import { getSessionUser } from "../services/session.server";
 import type { ContentGetCollection } from "../types";
 
 export const meta: MetaFunction = () => {
-	return [{ title: "ARTICLEPLAY - コンテンツ一覧" }];
+	return [{ title: "ArticlePlay - list" }];
 };
 
 // Loader 関数を追加して Firestore からデータを取得
@@ -42,7 +42,6 @@ export default function Index() {
 	// Dateオブジェクトではユーザーの入力環境の時間になる（日本環境では2025/02/06の文字列は、09:00:00 JSTとなる）
 	const start = new Date(startDate);
 	const end = new Date(endDate);
-	console.log("start", start);
 
 	// memo
 	// getTimezoneOffsetは、ローカルタイムゾーンがUTCより早い場合はマイナス、遅い場合はプラスの値を返す

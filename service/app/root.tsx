@@ -1,6 +1,8 @@
+import { ManifestLink } from "@remix-pwa/sw";
 import type { LinksFunction, LoaderFunction } from "@remix-run/node";
 import { redirect } from "@remix-run/node";
 import {
+	Form,
 	Link,
 	Links,
 	Meta,
@@ -9,12 +11,9 @@ import {
 	ScrollRestoration,
 	useLoaderData,
 } from "@remix-run/react";
-import { Form } from "@remix-run/react";
 import { useEffect, useState } from "react";
-import { ulid } from "ulid";
 import { authenticator } from "./services/auth.server";
-import type { Session, User } from "./services/auth.server";
-import { getSessionUser } from "./services/session.server";
+import type { Session } from "./services/auth.server";
 
 import "./tailwind.css";
 
@@ -29,6 +28,8 @@ export const links: LinksFunction = () => [
 		rel: "stylesheet",
 		href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
 	},
+	// { rel: "manifest", href: "/manifest.json" },
+	{ rel: "manifest", href: "/manifest.webmanifest" },
 	// { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
 ];
 
@@ -72,7 +73,7 @@ function Layout() {
 										A
 									</div>
 									<span className="text-xl font-bold text-gray-900 dark:text-gray-100">
-										ARTICLEPLAY
+										rticlePlay
 									</span>
 								</div>
 							</div>

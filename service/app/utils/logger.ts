@@ -10,7 +10,7 @@ const logger = winston.createLogger({
 		isDev ? winston.format.prettyPrint() : winston.format.json(),
 	),
 	defaultMeta: {
-		service: "articleplay",
+		service: "ArticlePlay",
 		environment: process.env.NODE_ENV || "development",
 	},
 	transports: [new winston.transports.Console()],
