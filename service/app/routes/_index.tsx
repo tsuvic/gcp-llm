@@ -227,42 +227,86 @@ export default function Index() {
 				{/* コンテンツ一覧 */}
 				<div className="space-y-3">
 					{filteredContents.map((content) => (
-						<Link
+						<div
 							key={content.contentId}
-							to={`/contents/${content.contentId}`}
-							className="block h-16 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all border border-gray-100 dark:border-gray-700 hover:border-blue-100 dark:hover:border-blue-900 relative overflow-hidden group"
+							className={`block h-16 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 relative overflow-hidden ${
+								content.status !== "error"
+									? "hover:shadow-md transition-all hover:border-blue-100 dark:hover:border-blue-900 group"
+									: ""
+							}`}
 						>
-							<div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-transparent group-hover:from-blue-50 dark:group-hover:from-blue-900/20 transition-all" />
-							<div className="flex h-full p-4 items-center relative">
-								{/* PC表示用レイアウト */}
-								<div className="hidden md:block flex-1 min-w-0">
-									<h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
-										{content.title}
-									</h2>
-									<p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-										{content.url}
-									</p>
-								</div>
-								<div className="hidden md:block ml-4">
-									<span className="text-sm text-gray-700 dark:text-gray-300">
-										{content.createdAt.toLocaleString()}
-									</span>
-								</div>
+							{content.status === "error" ? (
+								<div className="flex h-full p-4 items-center relative">
+									{/* PC表示用レイアウト */}
+									<div className="hidden md:block flex-1 min-w-0">
+										<div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+											<p className="text-[11px] leading-tight text-gray-500 dark:text-gray-400">
+												処理に失敗しました。対象のURLがAIによる自動アクセスを許可していない可能性があります。他のURLで再度お試しください。
+											</p>
+										</div>
+										<p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+											{content.url}
+										</p>
+									</div>
+									<div className="hidden md:block ml-4">
+										<span className="text-[13px] text-gray-700 dark:text-gray-300">
+											{content.createdAt.toLocaleString()}
+										</span>
+									</div>
 
-								{/* スマホ表示用レイアウト */}
-								<div className="md:hidden w-full">
-									<h2 className="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">
-										{content.title}
-									</h2>
-									<p className="text-xs text-gray-500 dark:text-gray-500 truncate">
-										{content.url}
-									</p>
-									<p className="text-xs text-right text-gray-600 dark:text-gray-400">
-										{content.createdAt.toLocaleString()}
-									</p>
+									{/* スマホ表示用レイアウト */}
+									<div className="md:hidden w-full">
+										<div className="text-xs font-semibold text-gray-900 dark:text-gray-100">
+											<p className="text-[10px] leading-tight text-gray-500 dark:text-gray-400">
+												処理に失敗しました。対象のURLがAIによる自動アクセスを許可していない可能性があります。他のURLで再度お試しください。
+											</p>
+										</div>
+										<p className="text-xs text-gray-500 dark:text-gray-500 truncate">
+											{content.url}
+										</p>
+										<p className="text-xs text-right text-gray-600 dark:text-gray-400">
+											{content.createdAt.toLocaleString()}
+										</p>
+									</div>
 								</div>
-							</div>
-						</Link>
+							) : (
+								<Link
+									to={`/contents/${content.contentId}`}
+									className="block h-full"
+								>
+									<div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-transparent group-hover:from-blue-50 dark:group-hover:from-blue-900/20 transition-all" />
+									<div className="flex h-full p-4 items-center relative">
+										{/* PC表示用レイアウト */}
+										<div className="hidden md:block flex-1 min-w-0">
+											<h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
+												{content.title}
+											</h2>
+											<p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+												{content.url}
+											</p>
+										</div>
+										<div className="hidden md:block ml-4">
+											<span className="text-sm text-gray-700 dark:text-gray-300">
+												{content.createdAt.toLocaleString()}
+											</span>
+										</div>
+
+										{/* スマホ表示用レイアウト */}
+										<div className="md:hidden w-full">
+											<h2 className="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">
+												{content.title}
+											</h2>
+											<p className="text-xs text-gray-500 dark:text-gray-500 truncate">
+												{content.url}
+											</p>
+											<p className="text-xs text-right text-gray-600 dark:text-gray-400">
+												{content.createdAt.toLocaleString()}
+											</p>
+										</div>
+									</div>
+								</Link>
+							)}
+						</div>
 					))}
 				</div>
 			</main>
