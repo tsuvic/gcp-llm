@@ -28,9 +28,9 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm install --frozen-lockfile
 
 # Remixのビルドに必要なファイルをすべてマウント
-RUN --mount=type=bind,source=app,target=/app/app \
-    --mount=type=bind,source=public,target=/app/public \
-    --mount=type=bind,source=vite.config.ts,target=/app/vite.config.ts \
+COPY /public /app/public
+COPY /app /app/app
+RUN --mount=type=bind,source=vite.config.ts,target=/app/vite.config.ts \
     --mount=type=bind,source=tailwind.config.ts,target=/app/tailwind.config.ts \
     --mount=type=bind,source=postcss.config.js,target=/app/postcss.config.js \
     pnpm run build
