@@ -14,6 +14,9 @@ importers:
       '@google-cloud/storage':
         specifier: ^7.15.0
         version: 7.15.0
+      '@google-cloud/tasks':
+        specifier: ^5.5.2
+        version: 5.5.2
       '@google-cloud/text-to-speech':
         specifier: ^5.8.0
         version: 5.8.0
@@ -890,6 +893,10 @@ packages:
   '@google-cloud/storage@7.15.0':
     resolution: {integrity: sha512-/j/+8DFuEOo33fbdX0V5wjooOoFahEaMEdImHBmM2tH9MPHJYNtmXOf2sGUmZmiufSukmBEvdlzYgDkkgeBiVQ==}
     engines: {node: '>=14'}
+
+  '@google-cloud/tasks@5.5.2':
+    resolution: {integrity: sha512-F934h4rI3OLlEVgzthDzE5RDQqT2brlq+BeD15eHNBi4sGMTdaz/b4y3eMFxJvB2hZk5mEKlLnsb9Pt2EcmNSQ==}
+    engines: {node: '>=v14'}
 
   '@google-cloud/text-to-speech@5.8.0':
     resolution: {integrity: sha512-54/+grFe2duPzUWGVbWe52P4p5SwiUY6jk4XZ6ia9D1MRPG61uD35KvnAf58Kt+T0426amzi0e3P63PHdJA2yw==}
@@ -5008,6 +5015,13 @@ snapshots:
       retry-request: 7.0.2
       teeny-request: 9.0.0
       uuid: 8.3.2
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+
+  '@google-cloud/tasks@5.5.2':
+    dependencies:
+      google-gax: 4.4.1
     transitivePeerDependencies:
       - encoding
       - supports-color

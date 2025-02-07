@@ -1,11 +1,9 @@
-import { Timestamp } from "@google-cloud/firestore";
+import { CloudTasksClient } from "@google-cloud/tasks";
 import type { ActionFunctionArgs, MetaFunction } from "@remix-run/node";
 import { Form, redirect, useActionData, useNavigation } from "@remix-run/react";
 import { useEffect, useState } from "react";
-import { createContent, handleError } from "../function";
-import { saveContent } from "../function/firebase";
+import { handleError } from "../function";
 import { getSessionUser } from "../services/session.server";
-import type { ContentSetCollection } from "../types";
 import { logger } from "../utils/logger";
 
 export const meta: MetaFunction = () => {
@@ -19,27 +17,90 @@ export const meta: MetaFunction = () => {
 };
 
 export async function action({ request }: ActionFunctionArgs) {
-	try {
-		const formData = await request.formData();
-		const url = formData.get("url");
-		const session = await getSessionUser(request);
-		if (!session) {
-			throw redirect("/login");
-		}
+	if (!process.env.GCP_PROJECT_ID) {
+		throw new Error("GCP_PROJECT_ID is not set");
+	}
+	if (!process.env.GCP_LOCATION) {
+		throw new Error("GCP_LOCATION is not set");
+	}
+	if (!process.env.GCP_QUEUE) {
+		throw new Error("GCP_QUEUE is not set");
+	}
+	const session = await getSessionUser(request);
+	if (!session) {
+		throw redirect("/login");
+	}
+	const formData = await request.formData();
+	const url = formData.get("url");
+	if (!url) {
+		logger.error({
+			message: "URLが指定されていません",
+			url,
+			timestamp: new Date().toISOString(),
+		});
+		return {
+			status: "error",
+			message: "エラー",
+			error: "URLを入力してください",
+		};
+	}
 
-		if (!url) {
-			logger.error({
-				message: "URLが指定されていません",
-				url,
-				timestamp: new Date().toISOString(),
-			});
-			return {
-				status: "error",
-				message: "エラー",
-				error: "URLを入力してください",
-			};
-		}
+	const client = new CloudTasksClient();
+	const parent = client.queuePath(
+		process.env.GCP_PROJECT_ID,
+		process.env.GCP_LOCATION,
+		process.env.GCP_QUEUE,
+	);
 
+	const task = {
+		httpRequest: {
+			httpMethod: "POST" as const,
+			url: url?.toString(),
+			body: Buffer.from(
+				JSON.stringify({
+					url: url?.toString(),
+					tenantId: session.tenantId,
+				}),
+			).toString("base64"),
+			headers: {
+				"Content-Type": "application/json",
+			},
+		},
+	};
+
+	const [response] = await client.createTask({ parent, task });
+	logger.info(`Created task ${response.name}`);
+
+	// 一時的なレスポンス
+	return {
+		status: "success",
+		message: "タスクをキューに追加しました",
+		taskName: response.name,
+	};
+
+	// try {
+	// 	const formData = await request.formData();
+	// 	const url = formData.get("url");
+	// 	const session = await getSessionUser(request);
+	// 	if (!session) {
+	// 		throw redirect("/login");
+	// 	}
+
+	// 	if (!url) {
+	// 		logger.error({
+	// 			message: "URLが指定されていません",
+	// 			url,
+	// 			timestamp: new Date().toISOString(),
+	// 		});
+	// 		return {
+	// 			status: "error",
+	// 			message: "エラー",
+	// 			error: "URLを入力してください",
+	// 		};
+	// 	}
+
+	// 以下の処理はコメントアウト
+	/*
 		const result = await createContent(url.toString(), session.tenantId);
 
 		const now = new Date();
@@ -66,9 +127,10 @@ export async function action({ request }: ActionFunctionArgs) {
 				(audio) => `data:audio/mp3;base64,${audio}`,
 			),
 		};
-	} catch (error) {
-		return handleError(error);
-	}
+		*/
+	// } catch (error) {
+	// 	return handleError(error);
+	// }
 }
 
 export default function Index() {
