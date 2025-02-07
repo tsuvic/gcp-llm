@@ -266,3 +266,10 @@ manifest.webmanifest が正しく生成されているか見る
 ディベロッパーツールから確認しようとしたが、Chrome では確認できない事例が多い
 とりあえず URL ベタ打ちして存在するか確認した。
 次に head タグに link があるか確認した。なさそう。フレームワークが動いてなさそうなので手動で追加
+
+[share](https://shafspecs.hashnode.dev/remix-pwa-practical-guide)
+URL ではなく TITLE に URL が含まれる
+モバイルでキャッシュ消してブラウザで開くと add to home screen のポップアップ
+一定時間でブラウザがユーザーの利用時間に応じてポップアップを出す？
+.well-known/assetlinks.json を生成したが、効果を確認できてない
+apple-app-site-association も対応すべき

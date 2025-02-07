@@ -58,12 +58,30 @@ export const loader = () => {
 			share_target: {
 				action: "/share",
 				method: "POST",
+				enctype: "multipart/form-data",
 				params: {
 					title: "title",
 					text: "text",
 					url: "url",
+					// files: [
+					// 	{
+					// 		name: "files",
+					// 		accept: ["text/*", "image/*", "application/pdf"],
+					// 	},
+					// ],
 				},
 			},
+			categories: ["productivity", "utilities"],
+			orientation: "any",
+			prefer_related_applications: false,
+			related_applications: [],
+			shortcuts: [
+				{
+					name: "新規保存",
+					url: "/save",
+					icons: [{ src: "icon-96x96.png", sizes: "96x96", type: "image/png" }],
+				},
+			],
 		} as WebAppManifest,
 		{
 			headers: {
