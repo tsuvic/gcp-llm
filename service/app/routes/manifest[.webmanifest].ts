@@ -75,13 +75,13 @@ export const loader = () => {
 			orientation: "any",
 			prefer_related_applications: false,
 			related_applications: [],
-			shortcuts: [
-				{
-					name: "新規保存",
-					url: "/save",
-					icons: [{ src: "icon-96x96.png", sizes: "96x96", type: "image/png" }],
-				},
-			],
+			// shortcuts: [
+			// 	{
+			// 		name: "新規保存",
+			// 		url: "/save",
+			// 		icons: [{ src: "icon-96x96.png", sizes: "96x96", type: "image/png" }],
+			// 	},
+			// ],
 		} as WebAppManifest,
 		{
 			headers: {

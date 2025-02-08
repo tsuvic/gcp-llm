@@ -1,6 +1,6 @@
 import type { LoaderFunction, MetaFunction } from "@remix-run/node";
 import { Link, redirect, useLoaderData } from "@remix-run/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getContents } from "../function/firebase";
 import { getSessionUser } from "../services/session.server";
 import type { ContentGetCollection } from "../types";
@@ -35,6 +35,22 @@ export default function Index() {
 	const [showForm, setShowForm] = useState(false);
 	const [isSaving, setIsSaving] = useState(false);
 	const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+
+	// URLからsharedパラメータを取得して初期表示を制御
+	useEffect(() => {
+		const url = new URL(window.location.href);
+		if (url.searchParams.get("shared") === "true") {
+			setShowSuccessMessage(true);
+			// パラメータを削除（ブラウザの履歴をクリーンに保つ）
+			url.searchParams.delete("shared");
+			window.history.replaceState({}, "", url.toString());
+
+			// 5秒後にメッセージを消す
+			setTimeout(() => {
+				setShowSuccessMessage(false);
+			}, 5000);
+		}
+	}, []);
 
 	// トグル機能を追加
 	const toggleFilter = (filter: "title" | "url" | "date") => {

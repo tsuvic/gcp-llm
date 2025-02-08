@@ -38,6 +38,8 @@ RUN --mount=type=bind,source=vite.config.ts,target=/app/vite.config.ts \
 FROM base AS app
 COPY public /app/public
 COPY --from=prod-deps /app/node_modules /app/node_modules
+# workerはpublicに存在せず、ビルド時に生成されるため
+COPY --from=build /app/build/client/entry.worker.js /app/public/entry.worker.js
 COPY --from=build /app/build /app/build
 EXPOSE 3000
 CMD [ "pnpm", "start" ]

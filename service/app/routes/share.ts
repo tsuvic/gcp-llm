@@ -1,7 +1,69 @@
 import { PubSub } from "@google-cloud/pubsub";
-import { type ActionFunctionArgs, redirect } from "@remix-run/node";
+import type { WorkerActionArgs } from "@remix-pwa/sw";
+import { type ActionFunctionArgs, json, redirect } from "@remix-run/node";
 import { getSessionUser } from "../services/session.server";
 import { logger } from "../utils/logger";
+
+export async function workerAction({ context }: WorkerActionArgs) {
+	try {
+		// オリジナルのリクエストをサーバーに送信
+		const response = await context.fetchFromServer();
+
+		if (response.ok) {
+			// 成功した場合、ユーザーフレンドリーなページを表示
+			return new Response(
+				`
+				<html>
+					<head>
+						<title>共有完了</title>
+						<meta charset="utf-8">
+						<meta name="viewport" content="width=device-width, initial-scale=1">
+						<style>
+							body { 
+								font-family: sans-serif;
+								display: flex;
+								align-items: center;
+								justify-content: center;
+								min-height: 100vh;
+								margin: 0;
+								background: #f5f5f5;
+							}
+							.message {
+								text-align: center;
+								padding: 2rem;
+								background: white;
+								border-radius: 8px;
+								box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+							}
+						</style>
+					</head>
+					<body>
+						<div class="message">
+							<h1>共有が完了しました</h1>
+							<p>このページは自動的に閉じられます</p>
+						</div>
+						<script>
+							setTimeout(() => {
+								window.close();
+							}, 2000);
+						</script>
+					</body>
+				</html>
+			`,
+				{
+					headers: {
+						"Content-Type": "text/html;charset=utf-8",
+					},
+				},
+			);
+		}
+
+		return response;
+	} catch (error) {
+		console.error("Worker APIエラー", error);
+		return json({ error: "共有処理中にエラーが発生しました" }, { status: 500 });
+	}
+}
 
 export async function action({ request }: ActionFunctionArgs) {
 	if (!process.env.GCP_PROJECT_ID) {
@@ -61,12 +123,14 @@ export async function action({ request }: ActionFunctionArgs) {
 		const referer = request.headers.get("referer");
 
 		if (referer) {
-			// 元のページに戻る
-			return redirect(referer);
+			// 元のページに戻る（成功フラグ付きで）
+			return redirect(
+				`${referer}${referer.includes("?") ? "&" : "?"}shared=true`,
+			);
 		}
 
-		// リファラーがない場合はホームページに戻る
-		return redirect("/");
+		// リファラーがない場合はホームページに戻る（成功フラグ付きで）
+		return redirect("/?shared=true");
 	} catch (error) {
 		logger.error({
 			message: "APIエラー",

@@ -25,22 +25,24 @@ self.addEventListener("activate", (event) => {
   console.log("Service worker activated");
   event.waitUntil(self.clients.claim());
 });
-const entryWorker = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-  __proto__: null
-}, Symbol.toStringTag, { value: "Module" }));
-var __getOwnPropNames$9 = Object.getOwnPropertyNames;
-var __commonJS$9 = (cb, mod) => function __require() {
-  return mod || (0, cb[__getOwnPropNames$9(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
-};
-var require_worker_runtime$9 = __commonJS$9({
-  "@remix-pwa/worker-runtime"(exports, module) {
-    module.exports = {};
+const defaultFetchHandler = async ({
+  request
+}) => {
+  const serverHost = "https://gcp-llm-732240525648.asia-northeast1.run.app";
+  const url = new URL(request.url);
+  if (request.method.toLowerCase() === "get" && url.searchParams.get("_data")) {
+    const result = await fetch(`${serverHost}${url.pathname}`);
+    const data2 = await result.json();
+    console.log("data", data2);
+    return result;
   }
-});
-var worker_runtime_default$9 = require_worker_runtime$9();
-const route0 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  const a = await fetch(request);
+  console.log("a", a);
+  return a;
+};
+const entryWorker = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
-  default: worker_runtime_default$9
+  defaultFetchHandler
 }, Symbol.toStringTag, { value: "Module" }));
 var __getOwnPropNames$8 = Object.getOwnPropertyNames;
 var __commonJS$8 = (cb, mod) => function __require() {
@@ -52,7 +54,7 @@ var require_worker_runtime$8 = __commonJS$8({
   }
 });
 var worker_runtime_default$8 = require_worker_runtime$8();
-const route1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route0 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: worker_runtime_default$8
 }, Symbol.toStringTag, { value: "Module" }));
@@ -66,7 +68,7 @@ var require_worker_runtime$7 = __commonJS$7({
   }
 });
 var worker_runtime_default$7 = require_worker_runtime$7();
-const route2 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route1 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: worker_runtime_default$7
 }, Symbol.toStringTag, { value: "Module" }));
@@ -80,7 +82,7 @@ var require_worker_runtime$6 = __commonJS$6({
   }
 });
 var worker_runtime_default$6 = require_worker_runtime$6();
-const route3 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route2 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: worker_runtime_default$6
 }, Symbol.toStringTag, { value: "Module" }));
@@ -94,7 +96,7 @@ var require_worker_runtime$5 = __commonJS$5({
   }
 });
 var worker_runtime_default$5 = require_worker_runtime$5();
-const route4 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route3 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: worker_runtime_default$5
 }, Symbol.toStringTag, { value: "Module" }));
@@ -108,7 +110,7 @@ var require_worker_runtime$4 = __commonJS$4({
   }
 });
 var worker_runtime_default$4 = require_worker_runtime$4();
-const route5 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route4 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: worker_runtime_default$4
 }, Symbol.toStringTag, { value: "Module" }));
@@ -122,7 +124,7 @@ var require_worker_runtime$3 = __commonJS$3({
   }
 });
 var worker_runtime_default$3 = require_worker_runtime$3();
-const route6 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route5 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: worker_runtime_default$3
 }, Symbol.toStringTag, { value: "Module" }));
@@ -136,7 +138,7 @@ var require_worker_runtime$2 = __commonJS$2({
   }
 });
 var worker_runtime_default$2 = require_worker_runtime$2();
-const route7 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route6 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: worker_runtime_default$2
 }, Symbol.toStringTag, { value: "Module" }));
@@ -150,9 +152,94 @@ var require_worker_runtime$1 = __commonJS$1({
   }
 });
 var worker_runtime_default$1 = require_worker_runtime$1();
-const route8 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+const route7 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
   __proto__: null,
   default: worker_runtime_default$1
+}, Symbol.toStringTag, { value: "Module" }));
+function getAugmentedNamespace(n) {
+  if (n.__esModule) return n;
+  var f = n.default;
+  if (typeof f == "function") {
+    var a = function a2() {
+      if (this instanceof a2) {
+        return Reflect.construct(f, arguments, this.constructor);
+      }
+      return f.apply(this, arguments);
+    };
+    a.prototype = f.prototype;
+  } else a = {};
+  Object.defineProperty(a, "__esModule", { value: true });
+  Object.keys(n).forEach(function(k) {
+    var d = Object.getOwnPropertyDescriptor(n, k);
+    Object.defineProperty(a, k, d.get ? d : {
+      enumerable: true,
+      get: function() {
+        return n[k];
+      }
+    });
+  });
+  return a;
+}
+var dist = {};
+async function workerAction({ context }) {
+  try {
+    const response = await context.fetchFromServer();
+    if (response.ok) {
+      return new Response(
+        `
+				<html>
+					<head>
+						<title>共有完了</title>
+						<meta charset="utf-8">
+						<meta name="viewport" content="width=device-width, initial-scale=1">
+						<style>
+							body { 
+								font-family: sans-serif;
+								display: flex;
+								align-items: center;
+								justify-content: center;
+								min-height: 100vh;
+								margin: 0;
+								background: #f5f5f5;
+							}
+							.message {
+								text-align: center;
+								padding: 2rem;
+								background: white;
+								border-radius: 8px;
+								box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+							}
+						</style>
+					</head>
+					<body>
+						<div class="message">
+							<h1>共有が完了しました</h1>
+							<p>このページは自動的に閉じられます</p>
+						</div>
+						<script>
+							setTimeout(() => {
+								window.close();
+							}, 2000);
+						<\/script>
+					</body>
+				</html>
+			`,
+        {
+          headers: {
+            "Content-Type": "text/html;charset=utf-8"
+          }
+        }
+      );
+    }
+    return response;
+  } catch (error) {
+    console.error("Worker APIエラー", error);
+    return dist.json({ error: "共有処理中にエラーが発生しました" }, { status: 500 });
+  }
+}
+const route8 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+  __proto__: null,
+  workerAction
 }, Symbol.toStringTag, { value: "Module" }));
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __commonJS = (cb, mod) => function __require() {
@@ -169,7 +256,6 @@ const route9 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProper
   default: worker_runtime_default
 }, Symbol.toStringTag, { value: "Module" }));
 const assets = [
-  "/entry.worker.js",
   "/favicon.ico",
   "/icon-128x128.png",
   "/icon-144x144.png",
@@ -179,7 +265,20 @@ const assets = [
   "/icon-48x48.png",
   "/icon-512x512.png",
   "/icon-72x72.png",
-  "/icon-96x96.png"
+  "/icon-96x96.png",
+  "/assets/_index-CdWCLZmV.js",
+  "/assets/auth.google-l0sNRNKZ.js",
+  "/assets/auth.google.callback-l0sNRNKZ.js",
+  "/assets/components-BxXnOo4L.js",
+  "/assets/contents._contentId-BpdyIRoI.js",
+  "/assets/entry.client-Bz6NzM0-.js",
+  "/assets/login-ZaTu1qvx.js",
+  "/assets/logout-l0sNRNKZ.js",
+  "/assets/manifest_.webmanifest_-l0sNRNKZ.js",
+  "/assets/root-0MXJtXyV.css",
+  "/assets/root-BuFWRcP9.js",
+  "/assets/save-l0sNRNKZ.js",
+  "/assets/share-l0sNRNKZ.js"
 ];
 const routes = {
   "root": {
@@ -287,7 +386,7 @@ const routes = {
     hasLoader: false,
     hasAction: true,
     hasWorkerLoader: false,
-    hasWorkerAction: false,
+    hasWorkerAction: true,
     module: route8
   },
   "routes/save": {
@@ -4437,30 +4536,6 @@ const router$2 = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProp
   resolveTo,
   stripBasename
 }, Symbol.toStringTag, { value: "Module" }));
-function getAugmentedNamespace(n) {
-  if (n.__esModule) return n;
-  var f = n.default;
-  if (typeof f == "function") {
-    var a = function a2() {
-      if (this instanceof a2) {
-        return Reflect.construct(f, arguments, this.constructor);
-      }
-      return f.apply(this, arguments);
-    };
-    a.prototype = f.prototype;
-  } else a = {};
-  Object.defineProperty(a, "__esModule", { value: true });
-  Object.keys(n).forEach(function(k) {
-    var d = Object.getOwnPropertyDescriptor(n, k);
-    Object.defineProperty(a, k, d.get ? d : {
-      enumerable: true,
-      get: function() {
-        return n[k];
-      }
-    });
-  });
-  return a;
-}
 var mode$2 = {};
 /**
  * @remix-run/server-runtime v2.15.3
