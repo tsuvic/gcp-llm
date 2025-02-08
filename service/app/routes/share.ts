@@ -57,10 +57,16 @@ export async function action({ request }: ActionFunctionArgs) {
 			data: messageData,
 		});
 
-		return new Response(JSON.stringify({ status: "success" }), {
-			status: 200,
-			headers: { "Content-Type": "application/json" },
-		});
+		// リファラーをチェック
+		const referer = request.headers.get("referer");
+
+		if (referer) {
+			// 元のページに戻る
+			return redirect(referer);
+		}
+
+		// リファラーがない場合はホームページに戻る
+		return redirect("/");
 	} catch (error) {
 		logger.error({
 			message: "APIエラー",
