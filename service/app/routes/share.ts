@@ -4,6 +4,8 @@ import { type ActionFunctionArgs, json, redirect } from "@remix-run/node";
 import { getSessionUser } from "../services/session.server";
 import { logger } from "../utils/logger";
 
+// entry.worker.tsで共通のワーカーも定義できるし、Route用に定義することもできる
+// TODO: share target でPWAを開かずにブラウザに留める仕組みにしたい
 export async function workerAction({ context }: WorkerActionArgs) {
 	try {
 		// オリジナルのリクエストをサーバーに送信
@@ -126,11 +128,14 @@ export async function action({ request }: ActionFunctionArgs) {
 			// 元のページに戻る（成功フラグ付きで）
 			return redirect(
 				`${referer}${referer.includes("?") ? "&" : "?"}shared=true`,
+				{ status: 303 },
 			);
 		}
 
 		// リファラーがない場合はホームページに戻る（成功フラグ付きで）
-		return redirect("/?shared=true");
+		// The POST request is then ideally replied with an HTTP 303 See Other redirect to avoid multiple POST requests from being submitted if a page refresh was initiated by the user, for example.
+		// https://developer.mozilla.org/en-US/docs/Web/Manifest/Reference/share_target#receiving_share_data_using_post
+		return redirect("/?shared=true", { status: 303 });
 	} catch (error) {
 		logger.error({
 			message: "APIエラー",
