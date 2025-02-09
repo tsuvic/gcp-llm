@@ -1,6 +1,6 @@
 # ArticlePlay
 
-ArticlePlay は、ウェブ記事を共有・要約・管理するための PWA アプリケーションです。
+ArticlePlay は、ブラウジング中に Web ページの共有を行うことで、ユーザーが英語を学習するためのコンテンツを生成するアプリケーションです。Web ページを短いフレーズに分割し、対訳とオーディオを付加したテキストを生成します。
 
 ## 機能
 
@@ -23,7 +23,9 @@ ArticlePlay は、ウェブ記事を共有・要約・管理するための PWA 
   - Cloud Functions
   - Pub/Sub
   - Firestore
-- **AI**: LLM (Large Language Model)
+  - Cloud Storage
+  - Artifact Registry
+  - Vertex AI
 
 ## 開発環境のセットアップ
 
@@ -47,7 +49,9 @@ gcloud services enable \
   run.googleapis.com \
   pubsub.googleapis.com \
   firestore.googleapis.com \
-  artifactregistry.googleapis.com
+  artifactregistry.googleapis.com \
+  aiplatform.googleapis.com \
+  cloudresourcemanager.googleapis.com
 
 # Pub/Sub トピックの作成
 gcloud pubsub topics create xxxxxx
@@ -57,6 +61,12 @@ gcloud firestore databases create --location=asia-northeast1
 
 # Cloud Storage バケットの作成
 gcloud storage buckets create gs://xxxxxx --location=asia-northeast1
+
+# Artifact Registry リポジトリの作成
+gcloud artifacts repositories create article-play \
+  --repository-format=docker \
+  --location=asia-northeast1 \
+  --description="ArticlePlay のコンテナイメージ用リポジトリ"
 ```
 
 また、以下の設定も必要です：
@@ -72,25 +82,25 @@ gcloud storage buckets create gs://xxxxxx --location=asia-northeast1
 ```env
 GCP_PROJECT_ID=your-project-id
 GCP_STORAGE_BUCKET=your-storage-bucket
-MAX_INPUT_TOKENS=80000
-MAX_OUTPUT_TOKENS=5000
+MAX_INPUT_TOKENS=100
+MAX_OUTPUT_TOKENS=100
 GOOGLE_CLIENT_ID=your-client-id
 GOOGLE_CLIENT_SECRET=your-client-secret
 GOOGLE_AUTH_CLIENT_URL=http://localhost:5173
 SESSION_SECRET=your-session-secret
 GCP_LOCATION=asia-northeast1
 PUBSUB_TOPIC=your-topic-name
-GCP_DATABASE_ID=your-database-id
+VERTEX_AI_MODEL=gemini-1.5-flash
 ```
 
 ### インストール
 
 ```bash
 # 依存関係のインストール
-pnpm install
+pnpm i
 
 # 開発サーバーの起動
-pnpm dev
+npm run dev
 ```
 
 ### ビルドとデプロイ
@@ -103,18 +113,59 @@ pnpm build
 pnpm start
 ```
 
-## プロジェクト構造
+### デプロイ手順
 
+#### Cloud Functions のデプロイ
+
+```bash
+gcloud functions deploy xxxx \
+  --gen2 \
+  --runtime=nodejs20 \
+  --region=asia-northeast1 \
+  --allow-unauthenticated \
+  --service-account xxxx@xxxx.iam.gserviceaccount.com \
+  --trigger-topic=xxxx \
+  --set-env-vars \
+    GCP_PROJECT_ID=xxxx,\
+    GCP_STORAGE_BUCKET=xxxx,\
+    MAX_INPUT_TOKENS=xxxx,\
+    MAX_OUTPUT_TOKENS=xxxx,\
+    GOOGLE_CLIENT_ID=xxxx.apps.googleusercontent.com,\
+    GOOGLE_CLIENT_SECRET=xxxx,\
+    GOOGLE_AUTH_CLIENT_URL=https://xxxx.asia-northeast1.run.app,\
+    SESSION_SECRET=xxxx,\
+    GCP_LOCATION=asia-northeast1,\
+    PUBSUB_TOPIC=xxxx,\
+    GCP_DATABASE_ID=xxxx,\
+    VERTEX_AI_MODEL=xxxx
 ```
-service/
-├── app/
-│   ├── routes/            # ルート定義
-│   ├── services/          # 認証などのサービス
-│   ├── function/          # Firestore操作など
-│   ├── utils/            # ユーティリティ関数
-│   └── entry.worker.ts   # Service Worker定義
-├── public/               # 静的ファイル
-└── functions/            # Cloud Functions
+
+#### Cloud Run のデプロイ
+
+```bash
+# コンテナのビルドとプッシュ
+docker build --platform linux/amd64 \
+  -t asia-northeast1-docker.pkg.dev/xxxx/xxxx/xxxx:latest . && \
+docker push asia-northeast1-docker.pkg.dev/xxxx/xxxx/xxxx:latest
+
+# Cloud Run へのデプロイ
+gcloud run deploy xxxx \
+  --image asia-northeast1-docker.pkg.dev/xxxx/xxxx/xxxx:latest \
+  --platform managed \
+  --region asia-northeast1 \
+  --allow-unauthenticated \
+  --service-account xxxx@xxxx.iam.gserviceaccount.com \
+  --set-env-vars \
+    GCP_PROJECT_ID=xxxx,\
+    GCP_STORAGE_BUCKET=xxxx,\
+    MAX_INPUT_TOKENS=xxxx,\
+    MAX_OUTPUT_TOKENS=xxxx,\
+    GOOGLE_CLIENT_ID=xxxx.apps.googleusercontent.com,\
+    GOOGLE_CLIENT_SECRET=xxxx,\
+    GOOGLE_AUTH_CLIENT_URL=https://xxxx.asia-northeast1.run.app,\
+    SESSION_SECRET=xxxx,\
+    GCP_LOCATION=asia-northeast1,\
+    PUBSUB_TOPIC=xxxx
 ```
 
 ## 主要な機能の説明
