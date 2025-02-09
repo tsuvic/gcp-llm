@@ -18,10 +18,6 @@ const MAX_OUTPUT_TOKENS = process.env.MAX_OUTPUT_TOKENS
 
 // Vertex AIでのコンテン0ツ処理
 export async function createContent(url: string, tenantId: string) {
-	if (!process.env.GCP_PROJECT_ID) {
-		throw new Error("GCP_PROJECT_ID is not set");
-	}
-
 	const contentId = ulid();
 	logger.info({
 		message: "処理開始",
@@ -188,14 +184,26 @@ export function handleError(error: unknown) {
 
 // AIモデルの初期化
 function initializeAIModel() {
+	const GCP_PROJECT_ID = process.env.GCP_PROJECT_ID;
+	if (!GCP_PROJECT_ID) {
+		throw new Error("GCP_PROJECT_ID is not set");
+	}
+	const GCP_LOCATION = process.env.GCP_LOCATION;
+	if (!GCP_LOCATION) {
+		throw new Error("GCP_LOCATION is not set");
+	}
+	const VERTEX_AI_MODEL = process.env.VERTEX_AI_MODEL;
+	if (!VERTEX_AI_MODEL) {
+		throw new Error("VERTEX_AI_MODEL is not set");
+	}
 	const vertexAI = new VertexAI({
-		project: process.env.GCP_PROJECT_ID,
-		location: "asia-northeast1",
+		project: GCP_PROJECT_ID,
+		location: GCP_LOCATION,
 	});
 
 	return vertexAI.preview.getGenerativeModel(
 		{
-			model: "gemini-1.5-flash",
+			model: VERTEX_AI_MODEL,
 			safetySettings: [
 				{
 					category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
