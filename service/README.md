@@ -245,16 +245,18 @@ pnpm install --include=optional
 
 ## todo
 
-[ ]jst
-[ ]remix wpa
-[ ]cloudflare waf
-[ ]doc zenn
-[v]node env why where production?
-[v]エラーログ構造化されない
-[v]favicon 404
-[ ]locale time
-[ ] remix で layout route を作らずにヘッダーコンポーネントを各ルートに差し込んでた
-[ ] 把握しきれないスタイル。指示しても治らなくなる
+[v] jst
+[v] remix wpa
+[ ] cloudflare waf
+[v] doc zenn
+[v] node env why where production?
+[v] エラーログ構造化されない
+[v] favicon 404
+[v] remix で layout route を作らずにヘッダーコンポーネントを各ルートに差し込んでた
+[v] 把握しきれないスタイル。指示しても治らなくなる
+[v] ログのフォーマット
+[ ] 不要なコンポーネント削除
+[ ] エラーハンドリング強化、　 robots.txt の結果、ドメインに対するキャッシュ、ユーザー提示
 
 ## pwa
 
