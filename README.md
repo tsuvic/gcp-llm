@@ -75,6 +75,10 @@ gcloud artifacts repositories create article-play \
 2. 承認済みのリダイレクト URI に `http://localhost:5173/auth/google/callback` を追加
 3. 取得したクライアント ID とシークレットを環境変数に設定
 
+#### IaC
+
+TODO: Terraform で管理する
+
 ### 環境変数
 
 `.env`ファイルを作成し、以下の環境変数を設定してください：
