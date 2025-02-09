@@ -178,7 +178,7 @@ export default function Index() {
 										: "bg-gray-900 dark:bg-gray-200 text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-300"
 								}`}
 							>
-								{isSaving ? "保存中..." : "保存"}
+								{isSaving ? "saving..." : "save"}
 							</button>
 						</form>
 					)}
